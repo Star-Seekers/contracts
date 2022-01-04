@@ -2,18 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "../GameManager.sol";
-import "../Clones.sol";
+import "../interfaces/IClones.sol";
 
 contract UniversalData {
     GameManager internal gameManager;
-
-    enum Stat {
-        charisma,
-        ingenuity,
-        intelligence,
-        spirit,
-        toughness
-    }
 
     modifier notInMaintenance() {
         require(
@@ -41,10 +33,14 @@ contract UniversalData {
         _;
     }
     modifier onlyCloneOwner(address _owner, uint256 _cloneId) {
-        Clones clonesInstance = Clones(gameManager.contractAddresses("Clones"));
-        (address owner, , ) = clonesInstance.cloneData(_cloneId);
+        IClones clonesInstance = IClones(
+            gameManager.contractAddresses("Clones")
+        );
+        IClones.CloneData memory cloneData = clonesInstance.getCloneData(
+            _cloneId
+        );
 
-        require(owner == _owner, "Star Seekers: Clone owner only");
+        require(cloneData.owner == _owner, "Star Seekers: Clone owner only");
         _;
     }
 

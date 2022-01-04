@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/UniversalData.sol";
+import "./interfaces/ISkills.sol";
 
 contract Skills is UniversalData {
     uint256 private skillIndex;
@@ -10,8 +11,8 @@ contract Skills is UniversalData {
     struct Skill {
         bool dependency;
         bool disabled;
-        Stat primary_attribute;
-        Stat secondary_attribute;
+        ISkills.Stat primary_attribute;
+        ISkills.Stat secondary_attribute;
         string icon;
         string name;
         uint256 dependency_id;
@@ -63,36 +64,44 @@ contract Skills is UniversalData {
         skillGroupById[_skillGroupId].disabled = false;
     }
 
-    function getSkillById(uint256 _skillId) public view returns (Skill memory) {
+    function getSkillById(uint256 _skillId)
+        internal
+        view
+        returns (Skill memory)
+    {
         return skillById[_skillId];
     }
 
     function getSkillsByGroupId(uint256 _skillGroupId)
-        public
+        internal
         view
         returns (Skill[] memory skills)
     {
         return skillsByGroupId[_skillGroupId];
     }
 
-    function getStatName(Stat _stat) public pure returns (string memory) {
-        if (_stat == Stat.charisma) {
+    function getStatName(ISkills.Stat _stat)
+        public
+        pure
+        returns (string memory)
+    {
+        if (_stat == ISkills.Stat.charisma) {
             return "Charisma";
         }
 
-        if (_stat == Stat.ingenuity) {
+        if (_stat == ISkills.Stat.ingenuity) {
             return "Ingenuity";
         }
 
-        if (_stat == Stat.intelligence) {
+        if (_stat == ISkills.Stat.intelligence) {
             return "Intelligence";
         }
 
-        if (_stat == Stat.spirit) {
+        if (_stat == ISkills.Stat.spirit) {
             return "Spirit";
         }
 
-        if (_stat == Stat.toughness) {
+        if (_stat == ISkills.Stat.toughness) {
             return "Toughness";
         }
 

@@ -3,27 +3,28 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../../interfaces/UniversalData.sol";
-import "../../Clones.sol";
+import "../../interfaces/IClones.sol";
 
 contract Clone is ERC721, UniversalData {
-    uint256 cloneIds = 0;
+    uint256 nextCloneId = 0;
 
     constructor(address _gameManager)
         ERC721("Star Seekers Clone", "SSCLONE")
         UniversalData(_gameManager)
     {}
 
-    function create(address _owner, string memory _uri)
+    function create(address _owner)
         internal
         onlyGameContract
         returns (uint256)
     {
-        uint256 newCloneId = cloneIds;
-        _mint(_owner, newCloneId);
+        uint256 cloneId = nextCloneId;
 
-        cloneIds += 1;
+        _mint(_owner, cloneId);
 
-        return newCloneId;
+        nextCloneId += 1;
+
+        return cloneId;
     }
 
     function tokenURI(uint256 _tokenId)
@@ -37,9 +38,9 @@ contract Clone is ERC721, UniversalData {
             _exists(_tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
-        Clones clonesInstance = Clones(gameManager.contractAddresses("Clones"));
-        (, string memory uri, ) = clonesInstance.cloneData(_tokenId);
-
-        return uri;
+        return
+            IClones(gameManager.contractAddresses("Clones")).getCloneUri(
+                _tokenId
+            );
     }
 }

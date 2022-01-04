@@ -3,14 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/UniversalData.sol";
 
-import "./Skills.sol";
-import "./Implants.sol";
+import "./interfaces/ISkills.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract Learning is UniversalData {
     /// @dev Clone stats
     /// stats[_cloneId] => Stat
-    mapping(uint256 => mapping(Stat => uint256)) stats;
+    mapping(uint256 => mapping(ISkills.Stat => uint256)) stats;
 
     struct LearningState {
         bool is_learning;
@@ -59,9 +58,11 @@ contract Learning is UniversalData {
             "Star Seekers: Already learning skill."
         );
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
-        Skills skillsInstance = Skills(gameManager.contractAddresses("Skills"));
+        ISkills skillsInstance = ISkills(
+            gameManager.contractAddresses("Skills")
+        );
         /// @dev loads skill definitions
-        Skills.Skill memory skill = skillsInstance.getSkillById(_skillId);
+        ISkills.Skill memory skill = skillsInstance.getSkillById(_skillId);
         /// @dev check if clone is able to learn this skill
         _isLearnable(skill, _cloneId);
 
@@ -94,7 +95,7 @@ contract Learning is UniversalData {
     /// @notice private functions
     /// @notice returns time remaining in minutes as a timestamp
     function _calculateLearningPointsEarned(
-        Skills.Skill memory _skill,
+        ISkills.Skill memory _skill,
         uint256 _cloneId
     ) private view returns (uint256) {
         uint256 startTime = learningState[_cloneId].start_time;
@@ -117,7 +118,7 @@ contract Learning is UniversalData {
     }
 
     function _calculateLearningTimeRemaining(
-        Skills.Skill memory _skill,
+        ISkills.Skill memory _skill,
         uint256 _cloneId
     ) private view returns (uint256) {
         /// @dev calculate how many learning points are required to reach next level
@@ -138,7 +139,7 @@ contract Learning is UniversalData {
 
     /// @notice calculates required learning points based on player stats
     function _calculateLearningPointsRequired(
-        Skills.Skill memory _skill,
+        ISkills.Skill memory _skill,
         uint256 _cloneId,
         uint256 _primaryPlayerStatAttribute, // player attribute level
         uint256 _secondaryPlayerStatAttribute // player attribute level
@@ -172,7 +173,7 @@ contract Learning is UniversalData {
     }
 
     /// @notice checks if a skill meets the requirements to be learned
-    function _isLearnable(Skills.Skill memory _skill, uint256 _cloneId)
+    function _isLearnable(ISkills.Skill memory _skill, uint256 _cloneId)
         private
         view
         returns (bool)
@@ -194,11 +195,13 @@ contract Learning is UniversalData {
         return true;
     }
 
-    function _updateLearningState(uint256 _cloneId) private returns (bool) {
+    function _updateLearningState(uint256 _cloneId) private {
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
-        Skills skillsInstance = Skills(gameManager.contractAddresses("Skills"));
+        ISkills skillsInstance = ISkills(
+            gameManager.contractAddresses("Skills")
+        );
         /// @dev loads skill definitions
-        Skills.Skill memory skill = skillsInstance.getSkillById(
+        ISkills.Skill memory skill = skillsInstance.getSkillById(
             learningState[_cloneId].learning
         );
 
