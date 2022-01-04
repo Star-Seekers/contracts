@@ -33,4 +33,16 @@ interface IClones {
         returns (uint256);
 
     function getCloneUri(uint256 cloneId) external view returns (string memory);
+
+    function increaseStat(
+        uint256 cloneId,
+        IStats.Stat stat,
+        uint256 amount
+    ) external;
+
+    function decreaseStat(
+        uint256 cloneId,
+        IStats.Stat stat,
+        uint256 amount
+    ) external;
 }

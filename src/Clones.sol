@@ -58,7 +58,6 @@ contract Clones is UniversalData {
                 clonesOwnedByAddress[cloneData[_cloneId].owner] = clones;
             }
         }
-        address previousOwner = cloneData[_cloneId].owner;
         cloneData[_cloneId].owner = _newOwner;
         clonesOwnedByAddress[_newOwner].push(cloneData[_cloneId]);
     }
@@ -105,5 +104,21 @@ contract Clones is UniversalData {
     {
         string memory uri = cloneData[_cloneId].uri;
         return uri;
+    }
+
+    function increaseStat(
+        uint256 _cloneId,
+        IStats.Stat _stat,
+        uint256 _amount
+    ) internal onlyGameContract {
+        stats[_cloneId][_stat] += _amount;
+    }
+
+    function decreaseStat(
+        uint256 _cloneId,
+        IStats.Stat _stat,
+        uint256 _amount
+    ) internal onlyGameContract {
+        stats[_cloneId][_stat] -= _amount;
     }
 }

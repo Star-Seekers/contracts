@@ -43,4 +43,56 @@ contract Clone is ERC721, UniversalData {
                 _tokenId
             );
     }
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) public virtual override {
+        //solhint-disable-next-line max-line-length
+        require(
+            _isApprovedOrOwner(_msgSender(), _tokenId),
+            "ERC721: transfer caller is not owner nor approved"
+        );
+
+        IClones(gameManager.contractAddresses("Clones")).changeOwner(
+            _to,
+            _tokenId
+        );
+
+        _transfer(_from, _to, _tokenId);
+    }
+
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) public virtual override {
+        safeTransferFrom(_from, _to, _tokenId, "");
+    }
+
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId,
+        bytes memory _data
+    ) public virtual override {
+        require(
+            _isApprovedOrOwner(_msgSender(), _tokenId),
+            "ERC721: transfer caller is not owner nor approved"
+        );
+
+        IClones(gameManager.contractAddresses("Clones")).changeOwner(
+            _to,
+            _tokenId
+        );
+
+        _safeTransfer(_from, _to, _tokenId, _data);
+    }
 }
