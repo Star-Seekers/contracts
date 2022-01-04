@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.0;
 
+import "./IStats.sol";
+
 interface IClones {
     struct CloneData {
         address owner;
@@ -24,6 +26,11 @@ interface IClones {
         external
         view
         returns (CloneData memory);
+
+    function getCloneStatLevel(uint256 cloneId, IStats.Stat stat)
+        external
+        view
+        returns (uint256);
 
     function getCloneUri(uint256 cloneId) external view returns (string memory);
 }

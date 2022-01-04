@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/UniversalData.sol";
 import "./interfaces/IClone.sol";
+import "./interfaces/IStats.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract Clones is UniversalData {
@@ -17,6 +18,12 @@ contract Clones is UniversalData {
     mapping(uint256 => CloneData) public cloneData;
     mapping(address => CloneData[]) public clonesOwnedByAddress;
 
+    /// @dev Clone stats
+    /// stats[_cloneId][Stat] => Stat level
+    mapping(uint256 => mapping(IStats.Stat => uint256)) public stats;
+
+    event CloneCreated(uint256 cloneId, address owner);
+
     constructor(address _gameManager) UniversalData(_gameManager) {}
 
     function create(string memory _uri) public notInMaintenance {
@@ -25,14 +32,16 @@ contract Clones is UniversalData {
 
         CloneData memory data = CloneData({
             owner: msg.sender,
+            for_sale: false,
             uri: _uri, // IPFS json endpoint
-            id: newCloneId,
             price: 0,
-            for_sale: false
+            id: newCloneId
         });
 
         cloneData[newCloneId] = data;
         clonesOwnedByAddress[msg.sender].push(data);
+
+        emit CloneCreated(newCloneId, msg.sender);
     }
 
     function changeOwner(address _newOwner, uint256 _cloneId)
@@ -49,7 +58,7 @@ contract Clones is UniversalData {
                 clonesOwnedByAddress[cloneData[_cloneId].owner] = clones;
             }
         }
-
+        address previousOwner = cloneData[_cloneId].owner;
         cloneData[_cloneId].owner = _newOwner;
         clonesOwnedByAddress[_newOwner].push(cloneData[_cloneId]);
     }
@@ -77,6 +86,15 @@ contract Clones is UniversalData {
         returns (CloneData memory)
     {
         return cloneData[_cloneId];
+    }
+
+    function getCloneStatLevel(uint256 _cloneId, IStats.Stat _stat)
+        internal
+        view
+        onlyGameContract
+        returns (uint256)
+    {
+        return stats[_cloneId][_stat];
     }
 
     function getCloneUri(uint256 _cloneId)

@@ -1,20 +1,13 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.0;
+import "./IStats.sol";
 
 interface ISkills {
-    enum Stat {
-        charisma,
-        ingenuity,
-        intelligence,
-        spirit,
-        toughness
-    }
-
     struct Skill {
         bool dependency;
         bool disabled;
-        Stat primary_attribute;
-        Stat secondary_attribute;
+        IStats.Stat primary_attribute;
+        IStats.Stat secondary_attribute;
         string icon;
         string name;
         uint256 dependency_id;

@@ -12,6 +12,12 @@ contract CloneMarket is UniversalData {
 
     event CloneListed(uint256 cloneId, uint256 price);
     event CloneListingCancelled(uint256 cloneId);
+    event ClonePurchased(
+        uint256 cloneId,
+        address buyer,
+        address seller,
+        uint256 amount
+    );
 
     constructor(address _gameManager, address _federation)
         UniversalData(_gameManager)
@@ -85,6 +91,13 @@ contract CloneMarket is UniversalData {
             cloneData.owner,
             address(this),
             _cloneId
+        );
+
+        emit ClonePurchased(
+            _cloneId,
+            msg.sender,
+            cloneData.owner,
+            cloneData.price
         );
     }
 

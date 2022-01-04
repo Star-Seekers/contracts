@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/UniversalData.sol";
-import "./interfaces/ISkills.sol";
+import "./interfaces/IStats.sol";
 
 contract Skills is UniversalData {
     uint256 private skillIndex;
@@ -11,8 +11,8 @@ contract Skills is UniversalData {
     struct Skill {
         bool dependency;
         bool disabled;
-        ISkills.Stat primary_attribute;
-        ISkills.Stat secondary_attribute;
+        IStats.Stat primary_attribute;
+        IStats.Stat secondary_attribute;
         string icon;
         string name;
         uint256 dependency_id;
@@ -32,6 +32,9 @@ contract Skills is UniversalData {
     mapping(uint256 => SkillGroup) internal skillGroupById;
     mapping(uint256 => Skill[]) internal skillsByGroupId;
 
+    event SkillUpdated(uint256 skillId);
+    event SkillGroupUpdated(uint256 skillGroupId);
+
     constructor(address _gameManager) UniversalData(_gameManager) {}
 
     function addSkill(Skill memory _skill) public onlyAdmin {
@@ -39,6 +42,8 @@ contract Skills is UniversalData {
         _skill.disabled = false;
         skillById[skillIndex] = _skill;
         skillIndex += 1;
+
+        emit SkillUpdated(_skill.id);
     }
 
     function addSkillGroup(SkillGroup memory _skillGroup) public onlyAdmin {
@@ -46,22 +51,32 @@ contract Skills is UniversalData {
         _skillGroup.disabled = false;
         skillGroupById[skillGroupIndex] = _skillGroup;
         skillGroupIndex += 1;
+
+        emit SkillGroupUpdated(_skillGroup.id);
     }
 
     function disableSkill(uint256 _skillId) public onlyAdmin {
         skillById[_skillId].disabled = true;
+
+        emit SkillUpdated(_skillId);
     }
 
     function disableSkillGroup(uint256 _skillGroupId) public onlyAdmin {
         skillGroupById[_skillGroupId].disabled = true;
+
+        emit SkillGroupUpdated(_skillGroupId);
     }
 
     function enableSkill(uint256 _skillId) public onlyAdmin {
         skillById[_skillId].disabled = false;
+
+        emit SkillUpdated(_skillId);
     }
 
     function enableSkillGroup(uint256 _skillGroupId) public onlyAdmin {
         skillGroupById[_skillGroupId].disabled = false;
+
+        emit SkillGroupUpdated(_skillGroupId);
     }
 
     function getSkillById(uint256 _skillId)
@@ -80,28 +95,28 @@ contract Skills is UniversalData {
         return skillsByGroupId[_skillGroupId];
     }
 
-    function getStatName(ISkills.Stat _stat)
+    function getStatName(IStats.Stat _stat)
         public
         pure
         returns (string memory)
     {
-        if (_stat == ISkills.Stat.charisma) {
+        if (_stat == IStats.Stat.charisma) {
             return "Charisma";
         }
 
-        if (_stat == ISkills.Stat.ingenuity) {
+        if (_stat == IStats.Stat.ingenuity) {
             return "Ingenuity";
         }
 
-        if (_stat == ISkills.Stat.intelligence) {
+        if (_stat == IStats.Stat.intelligence) {
             return "Intelligence";
         }
 
-        if (_stat == ISkills.Stat.spirit) {
+        if (_stat == IStats.Stat.spirit) {
             return "Spirit";
         }
 
-        if (_stat == ISkills.Stat.toughness) {
+        if (_stat == IStats.Stat.toughness) {
             return "Toughness";
         }
 

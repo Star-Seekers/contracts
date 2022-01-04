@@ -2,15 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/UniversalData.sol";
-
 import "./interfaces/ISkills.sol";
+import "./interfaces/IStats.sol";
+import "./interfaces/IClones.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract Learning is UniversalData {
-    /// @dev Clone stats
-    /// stats[_cloneId] => Stat
-    mapping(uint256 => mapping(ISkills.Stat => uint256)) stats;
-
     struct LearningState {
         bool is_learning;
         uint256 end_time;
@@ -27,12 +24,15 @@ contract Learning is UniversalData {
     }
     mapping(uint256 => mapping(uint256 => LearningLog)) public learningLog;
 
+    event LearningStateUpdated(uint256 cloneId);
+
     constructor(address _gameManager) UniversalData(_gameManager) {}
 
     /// @notice after training has completed call this function to update state
     function completeLearning(uint256 _cloneId)
         public
         notInMaintenance
+        notForSale(_cloneId)
         onlyCloneOwner(msg.sender, _cloneId)
     {
         require(
@@ -44,13 +44,16 @@ contract Learning is UniversalData {
             "Star Seekers: Skill has not finished training"
         );
 
-        _updateLearningState(_cloneId);
+        _resetAndUpdateLearningState(_cloneId);
+
+        emit LearningStateUpdated(_cloneId);
     }
 
     /// @notice public functions
     function startLearning(uint256 _cloneId, uint256 _skillId)
         public
         notInMaintenance
+        notForSale(_cloneId)
         onlyCloneOwner(msg.sender, _cloneId)
     {
         require(
@@ -72,12 +75,15 @@ contract Learning is UniversalData {
             _calculateLearningTimeRemaining(skill, _cloneId);
         learningState[_cloneId].is_learning = true;
         learningState[_cloneId].learning = _skillId;
+
+        emit LearningStateUpdated(_cloneId);
     }
 
     /// @notice public functions
     function stopLearning(uint256 _cloneId)
         public
         notInMaintenance
+        notForSale(_cloneId)
         onlyCloneOwner(msg.sender, _cloneId)
     {
         require(
@@ -89,7 +95,9 @@ contract Learning is UniversalData {
             "Star Seekers: Skill has already finished training"
         );
 
-        _updateLearningState(_cloneId);
+        _resetAndUpdateLearningState(_cloneId);
+
+        emit LearningStateUpdated(_cloneId);
     }
 
     /// @notice private functions
@@ -109,9 +117,19 @@ contract Learning is UniversalData {
             trainingTime = (currentTime - startTime) % 60;
         }
 
+        IClones clonesInstance = IClones(
+            gameManager.contractAddresses("Clones")
+        );
+
         uint256 learningPointsPerMinute = _calculateLearningPointsPerMinute(
-            stats[_cloneId][_skill.primary_attribute],
-            stats[_cloneId][_skill.secondary_attribute]
+            clonesInstance.getCloneStatLevel(
+                _cloneId,
+                _skill.primary_attribute
+            ),
+            clonesInstance.getCloneStatLevel(
+                _cloneId,
+                _skill.secondary_attribute
+            )
         );
 
         return trainingTime * learningPointsPerMinute;
@@ -121,17 +139,31 @@ contract Learning is UniversalData {
         ISkills.Skill memory _skill,
         uint256 _cloneId
     ) private view returns (uint256) {
+        IClones clonesInstance = IClones(
+            gameManager.contractAddresses("Clones")
+        );
+
+        uint256 primaryAttributeLevel = clonesInstance.getCloneStatLevel(
+            _cloneId,
+            _skill.primary_attribute
+        );
+
+        uint256 secondaryAttributeLevel = clonesInstance.getCloneStatLevel(
+            _cloneId,
+            _skill.secondary_attribute
+        );
+
         /// @dev calculate how many learning points are required to reach next level
         uint256 learningPointsRequired = _calculateLearningPointsRequired(
             _skill,
             _cloneId,
-            stats[_cloneId][_skill.primary_attribute],
-            stats[_cloneId][_skill.secondary_attribute]
+            primaryAttributeLevel,
+            secondaryAttributeLevel
         );
 
         uint256 learningPointsPerMinute = _calculateLearningPointsPerMinute(
-            stats[_cloneId][_skill.primary_attribute],
-            stats[_cloneId][_skill.secondary_attribute]
+            primaryAttributeLevel,
+            secondaryAttributeLevel
         );
 
         return (learningPointsRequired / learningPointsPerMinute) * 1 minutes;
@@ -195,7 +227,7 @@ contract Learning is UniversalData {
         return true;
     }
 
-    function _updateLearningState(uint256 _cloneId) private {
+    function _resetAndUpdateLearningState(uint256 _cloneId) private {
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
         ISkills skillsInstance = ISkills(
             gameManager.contractAddresses("Skills")

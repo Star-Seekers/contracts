@@ -43,6 +43,17 @@ contract UniversalData {
         require(cloneData.owner == _owner, "Star Seekers: Clone owner only");
         _;
     }
+    modifier notForSale(uint256 _cloneId) {
+        IClones clonesInstance = IClones(
+            gameManager.contractAddresses("Clones")
+        );
+        IClones.CloneData memory cloneData = clonesInstance.getCloneData(
+            _cloneId
+        );
+
+        require(cloneData.for_sale == false, "Star Seekers: Clone owner only");
+        _;
+    }
 
     constructor(address _gameManager) {
         gameManager = GameManager(_gameManager);
