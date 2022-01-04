@@ -84,8 +84,6 @@ contract CloneMarket is UniversalData {
         cred.transfer(federation, federationCut);
         cred.transfer(cloneData.owner, sellerCut);
 
-        clonesInstance.changeOwner(msg.sender, _cloneId);
-
         IClone cloneInstance = IClone(gameManager.contractAddresses("Clone"));
         cloneInstance.safeTransferFrom(
             cloneData.owner,
