@@ -15,7 +15,7 @@ contract Learning is UniversalData {
         uint256 start_time;
     }
     /// @dev learningState[_cloneId] => LearningState
-    mapping(uint256 => LearningState) learningState;
+    mapping(uint256 => LearningState) public learningState;
 
     /// @dev learningLog[_cloneId][_skillId] => LearningLog
     struct LearningLog {
@@ -105,7 +105,7 @@ contract Learning is UniversalData {
     function _calculateLearningPointsEarned(
         ISkills.Skill memory _skill,
         uint256 _cloneId
-    ) private view returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 startTime = learningState[_cloneId].start_time;
         uint256 currentTime = block.timestamp;
         uint256 endTime = learningState[_cloneId].end_time;
@@ -138,7 +138,7 @@ contract Learning is UniversalData {
     function _calculateLearningTimeRemaining(
         ISkills.Skill memory _skill,
         uint256 _cloneId
-    ) private view returns (uint256) {
+    ) internal view returns (uint256) {
         IClones clonesInstance = IClones(
             gameManager.contractAddresses("Clones")
         );
@@ -175,7 +175,7 @@ contract Learning is UniversalData {
         uint256 _cloneId,
         uint256 _primaryPlayerStatAttribute, // player attribute level
         uint256 _secondaryPlayerStatAttribute // player attribute level
-    ) private view returns (uint256) {
+    ) internal view returns (uint256) {
         return
             (_calculateBaseLearningPoints(
                 _skill.multiplier,
@@ -188,7 +188,7 @@ contract Learning is UniversalData {
     function _calculateBaseLearningPoints(
         uint256 _multiplier,
         uint256 _skillLevel // player skill level
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         return (250 * _multiplier) * 6**(_skillLevel - 1);
     }
 
@@ -206,7 +206,7 @@ contract Learning is UniversalData {
 
     /// @notice checks if a skill meets the requirements to be learned
     function _isLearnable(ISkills.Skill memory _skill, uint256 _cloneId)
-        private
+        internal
         view
         returns (bool)
     {
@@ -227,7 +227,7 @@ contract Learning is UniversalData {
         return true;
     }
 
-    function _resetAndUpdateLearningState(uint256 _cloneId) private {
+    function _resetAndUpdateLearningState(uint256 _cloneId) internal {
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
         ISkills skillsInstance = ISkills(
             gameManager.contractAddresses("Skills")

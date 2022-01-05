@@ -45,7 +45,7 @@ contract Clones is UniversalData {
     }
 
     function changeOwner(address _newOwner, uint256 _cloneId)
-        internal
+        external
         onlyGameContract
     {
         CloneData[] memory clones = clonesOwnedByAddress[
@@ -66,20 +66,20 @@ contract Clones is UniversalData {
         uint256 _cloneId,
         bool _status,
         uint256 _price
-    ) internal onlyGameContract {
+    ) external onlyGameContract {
         cloneData[_cloneId].for_sale = _status;
         cloneData[_cloneId].price = _price;
     }
 
     function changeUri(uint256 _cloneId, string memory _uri)
-        internal
+        external
         onlyGameContract
     {
         cloneData[_cloneId].uri = _uri;
     }
 
     function getCloneData(uint256 _cloneId)
-        internal
+        external
         view
         onlyGameContract
         returns (CloneData memory)
@@ -88,7 +88,7 @@ contract Clones is UniversalData {
     }
 
     function getCloneStatLevel(uint256 _cloneId, IStats.Stat _stat)
-        internal
+        external
         view
         onlyGameContract
         returns (uint256)
@@ -97,7 +97,7 @@ contract Clones is UniversalData {
     }
 
     function getCloneUri(uint256 _cloneId)
-        internal
+        external
         view
         onlyGameContract
         returns (string memory)
@@ -110,7 +110,7 @@ contract Clones is UniversalData {
         uint256 _cloneId,
         IStats.Stat _stat,
         uint256 _amount
-    ) internal onlyGameContract {
+    ) external onlyGameContract {
         stats[_cloneId][_stat] += _amount;
     }
 
@@ -118,7 +118,9 @@ contract Clones is UniversalData {
         uint256 _cloneId,
         IStats.Stat _stat,
         uint256 _amount
-    ) internal onlyGameContract {
+    ) external onlyGameContract {
         stats[_cloneId][_stat] -= _amount;
     }
+
+    function _getOraclePrice() private 
 }

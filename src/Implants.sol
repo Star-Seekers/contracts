@@ -46,7 +46,7 @@ contract Implants is UniversalData {
     }
 
     function getImplantById(uint256 _implantId)
-        internal
+        external
         view
         returns (Implant memory)
     {

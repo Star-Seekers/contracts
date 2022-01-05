@@ -79,22 +79,6 @@ contract Skills is UniversalData {
         emit SkillGroupUpdated(_skillGroupId);
     }
 
-    function getSkillById(uint256 _skillId)
-        internal
-        view
-        returns (Skill memory)
-    {
-        return skillById[_skillId];
-    }
-
-    function getSkillsByGroupId(uint256 _skillGroupId)
-        internal
-        view
-        returns (Skill[] memory skills)
-    {
-        return skillsByGroupId[_skillGroupId];
-    }
-
     function getStatName(IStats.Stat _stat)
         public
         pure
@@ -121,5 +105,21 @@ contract Skills is UniversalData {
         }
 
         return "";
+    }
+
+    function getSkillById(uint256 _skillId)
+        external
+        view
+        returns (Skill memory)
+    {
+        return skillById[_skillId];
+    }
+
+    function getSkillsByGroupId(uint256 _skillGroupId)
+        external
+        view
+        returns (Skill[] memory skills)
+    {
+        return skillsByGroupId[_skillGroupId];
     }
 }
