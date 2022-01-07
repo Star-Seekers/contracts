@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../../interfaces/UniversalData.sol";
-import "../../interfaces/IClones.sol";
+import "../../interfaces/ICloningFacility.sol";
 
 contract Clone is ERC721, UniversalData {
     uint256 nextCloneId = 0;
@@ -39,9 +39,8 @@ contract Clone is ERC721, UniversalData {
             "ERC721Metadata: URI query for nonexistent token"
         );
         return
-            IClones(gameManager.contractAddresses("Clones")).getCloneUri(
-                _tokenId
-            );
+            ICloningFacility(gameManager.contractAddresses("Clones"))
+                .getCloneUri(_tokenId);
     }
 
     function transferFrom(
@@ -55,7 +54,7 @@ contract Clone is ERC721, UniversalData {
             "ERC721: transfer caller is not owner nor approved"
         );
 
-        IClones(gameManager.contractAddresses("Clones")).changeOwner(
+        ICloningFacility(gameManager.contractAddresses("Clones")).changeOwner(
             _to,
             _tokenId
         );
@@ -88,7 +87,7 @@ contract Clone is ERC721, UniversalData {
             "ERC721: transfer caller is not owner nor approved"
         );
 
-        IClones(gameManager.contractAddresses("Clones")).changeOwner(
+        ICloningFacility(gameManager.contractAddresses("Clones")).changeOwner(
             _to,
             _tokenId
         );

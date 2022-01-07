@@ -5,14 +5,22 @@ contract GameManager {
     bool public maintenance = false;
     address public admin;
     uint256 public salesTax = 350;
-    uint256 public creationBonus = 10000;
+    uint256 public startingCred = 10000;
     address public federation;
 
     mapping(string => address) public contractAddresses;
+    mapping(address => bool) public hasReceivedStartingCred;
     mapping(address => bool) public isGameContract;
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "Star Seekers: Admin only");
+        _;
+    }
+    modifier onlyGameContract() {
+        require(
+            isGameContract[msg.sender],
+            "Star Seekers: Not a game contract"
+        );
         _;
     }
 
@@ -51,7 +59,14 @@ contract GameManager {
         salesTax = _amount;
     }
 
-    function setCreationBonus(uint256 _amount) public onlyAdmin {
-        creationBonus = _amount;
+    function setStartingCred(uint256 _amount) public onlyAdmin {
+        startingCred = _amount;
+    }
+
+    function updateHasReceivedStartingCred(address _player)
+        external
+        onlyGameContract
+    {
+        hasReceivedStartingCred[_player] = true;
     }
 }

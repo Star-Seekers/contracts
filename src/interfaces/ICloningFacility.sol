@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./IStats.sol";
 
-interface IClones {
+interface ICloningFacility {
     struct CloneData {
         address owner;
         bool for_sale;

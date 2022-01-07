@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/UniversalData.sol";
 import "./interfaces/IClone.sol";
-import "./interfaces/IClones.sol";
+import "./interfaces/ICloningFacility.sol";
 import "./tokens/CRED.sol";
 
 contract CloneMarket is UniversalData {
@@ -27,11 +27,11 @@ contract CloneMarket is UniversalData {
             cloneInstance.isApprovedForAll(msg.sender, address(this)),
             "Star Seekers: Market not approved"
         );
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
 
-        clonesInstance.changeSalesStatus(_cloneId, true, _price);
+        cloningFacility.changeSalesStatus(_cloneId, true, _price);
 
         emit CloneListed(_cloneId, _price);
     }
@@ -40,22 +40,21 @@ contract CloneMarket is UniversalData {
         public
         onlyCloneOwner(msg.sender, _cloneId)
     {
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
 
-        clonesInstance.changeSalesStatus(_cloneId, false, 0);
+        cloningFacility.changeSalesStatus(_cloneId, false, 0);
 
         emit CloneListingCancelled(_cloneId);
     }
 
     function buy(uint256 _cloneId) public {
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
-        IClones.CloneData memory cloneData = clonesInstance.getCloneData(
-            _cloneId
-        );
+        ICloningFacility.CloneData memory cloneData = cloningFacility
+            .getCloneData(_cloneId);
         require(cloneData.for_sale == true, "Star Seeker: clone not for sale");
 
         Cred cred = Cred(gameManager.contractAddresses("CRED"));

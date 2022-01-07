@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./interfaces/UniversalData.sol";
 import "./interfaces/ISkills.sol";
 import "./interfaces/IStats.sol";
-import "./interfaces/IClones.sol";
+import "./interfaces/ICloningFacility.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract Learning is UniversalData {
@@ -133,16 +133,16 @@ contract Learning is UniversalData {
             trainingTime = (currentTime - startTime) % 60;
         }
 
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
 
         uint256 learningPointsPerMinute = _calculateLearningPointsPerMinute(
-            clonesInstance.getCloneStatLevel(
+            cloningFacility.getCloneStatLevel(
                 _cloneId,
                 _skill.primary_attribute
             ),
-            clonesInstance.getCloneStatLevel(
+            cloningFacility.getCloneStatLevel(
                 _cloneId,
                 _skill.secondary_attribute
             )
@@ -155,16 +155,16 @@ contract Learning is UniversalData {
         ISkills.Skill memory _skill,
         uint256 _cloneId
     ) internal view returns (uint256) {
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
 
-        uint256 primaryAttributeLevel = clonesInstance.getCloneStatLevel(
+        uint256 primaryAttributeLevel = cloningFacility.getCloneStatLevel(
             _cloneId,
             _skill.primary_attribute
         );
 
-        uint256 secondaryAttributeLevel = clonesInstance.getCloneStatLevel(
+        uint256 secondaryAttributeLevel = cloningFacility.getCloneStatLevel(
             _cloneId,
             _skill.secondary_attribute
         );

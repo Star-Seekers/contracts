@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../GameManager.sol";
-import "../interfaces/IClones.sol";
+import "../interfaces/ICloningFacility.sol";
 import "../interfaces/ILearning.sol";
 
 contract UniversalData {
@@ -34,23 +34,21 @@ contract UniversalData {
         _;
     }
     modifier onlyCloneOwner(address _owner, uint256 _cloneId) {
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
-        IClones.CloneData memory cloneData = clonesInstance.getCloneData(
-            _cloneId
-        );
+        ICloningFacility.CloneData memory cloneData = cloningFacility
+            .getCloneData(_cloneId);
 
         require(cloneData.owner == _owner, "Star Seekers: Clone owner only");
         _;
     }
     modifier notForSale(uint256 _cloneId) {
-        IClones clonesInstance = IClones(
+        ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("Clones")
         );
-        IClones.CloneData memory cloneData = clonesInstance.getCloneData(
-            _cloneId
-        );
+        ICloningFacility.CloneData memory cloneData = cloningFacility
+            .getCloneData(_cloneId);
 
         require(
             cloneData.for_sale == false,

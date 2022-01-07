@@ -42,8 +42,12 @@ contract CloningFacility is UniversalData {
 
         ICred cred = ICred(gameManager.contractAddresses("CRED"));
 
-        if (gameManager.creationBonus() > 0) {
-            cred.mint(msg.sender, gameManager.creationBonus());
+        if (
+            gameManager.startingCred() > 0 &&
+            gameManager.hasReceivedStartingCred(msg.sender) == false
+        ) {
+            cred.mint(msg.sender, gameManager.startingCred());
+            gameManager.updateHasReceivedStartingCred(msg.sender);
         }
 
         emit CloneCreated(newCloneId, msg.sender);
