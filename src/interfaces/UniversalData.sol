@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../GameManager.sol";
 import "../interfaces/IClones.sol";
+import "../interfaces/ILearning.sol";
 
 contract UniversalData {
     GameManager internal gameManager;
@@ -51,7 +52,10 @@ contract UniversalData {
             _cloneId
         );
 
-        require(cloneData.for_sale == false, "Star Seekers: Clone owner only");
+        require(
+            cloneData.for_sale == false,
+            "Star Seekers: Can't complete action while clone is for sale"
+        );
         _;
     }
 

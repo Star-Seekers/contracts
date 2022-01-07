@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 contract GameManager {
     bool public maintenance = false;
     address public admin;
+    uint256 public salesTax = 350;
+    uint256 public creationBonus = 10000;
+    address public federation;
 
     mapping(string => address) public contractAddresses;
     mapping(address => bool) public isGameContract;
@@ -38,5 +41,17 @@ contract GameManager {
 
     function setMaintenance(bool _status) public onlyAdmin {
         maintenance = _status;
+    }
+
+    function setFederation(address _newFederationAddress) public onlyAdmin {
+        federation = _newFederationAddress;
+    }
+
+    function setSalesTax(uint256 _amount) public onlyAdmin {
+        salesTax = _amount;
+    }
+
+    function setCreationBonus(uint256 _amount) public onlyAdmin {
+        creationBonus = _amount;
     }
 }

@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 import "./interfaces/UniversalData.sol";
 import "./interfaces/IClone.sol";
 import "./interfaces/IStats.sol";
+import "./interfaces/ICRED.sol";
 
 /// @notice this contract serves as the central location for clone s
-contract Clones is UniversalData {
+contract CloningFacility is UniversalData {
     /// @dev cloneData[_cloneId] => Data
     struct CloneData {
         address owner;
@@ -15,12 +16,10 @@ contract Clones is UniversalData {
         uint256 price;
         uint256 id;
     }
-    mapping(uint256 => CloneData) public cloneData;
-    mapping(address => CloneData[]) public clonesOwnedByAddress;
-
+    mapping(uint256 => CloneData) cloneData;
+    mapping(address => uint256[]) clonesOwnedByAddress;
     /// @dev Clone stats
-    /// stats[_cloneId][Stat] => Stat level
-    mapping(uint256 => mapping(IStats.Stat => uint256)) public stats;
+    mapping(uint256 => mapping(IStats.Stat => uint256)) stats;
 
     event CloneCreated(uint256 cloneId, address owner);
 
@@ -39,7 +38,13 @@ contract Clones is UniversalData {
         });
 
         cloneData[newCloneId] = data;
-        clonesOwnedByAddress[msg.sender].push(data);
+        clonesOwnedByAddress[msg.sender].push(data.id);
+
+        ICred cred = ICred(gameManager.contractAddresses("CRED"));
+
+        if (gameManager.creationBonus() > 0) {
+            cred.mint(msg.sender, gameManager.creationBonus());
+        }
 
         emit CloneCreated(newCloneId, msg.sender);
     }
@@ -48,18 +53,18 @@ contract Clones is UniversalData {
         external
         onlyGameContract
     {
-        CloneData[] memory clones = clonesOwnedByAddress[
+        uint256[] memory clones = clonesOwnedByAddress[
             cloneData[_cloneId].owner
         ];
 
         for (uint256 i = 0; i <= clones.length; i += 1) {
-            if (clones[i].id == _cloneId) {
+            if (clones[i] == _cloneId) {
                 delete clones[i];
                 clonesOwnedByAddress[cloneData[_cloneId].owner] = clones;
             }
         }
         cloneData[_cloneId].owner = _newOwner;
-        clonesOwnedByAddress[_newOwner].push(cloneData[_cloneId]);
+        clonesOwnedByAddress[_newOwner].push(_cloneId);
     }
 
     function changeSalesStatus(
@@ -121,6 +126,4 @@ contract Clones is UniversalData {
     ) external onlyGameContract {
         stats[_cloneId][_stat] -= _amount;
     }
-
-    function _getOraclePrice() private 
 }

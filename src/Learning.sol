@@ -15,14 +15,14 @@ contract Learning is UniversalData {
         uint256 start_time;
     }
     /// @dev learningState[_cloneId] => LearningState
-    mapping(uint256 => LearningState) public learningState;
+    mapping(uint256 => LearningState) learningState;
 
     /// @dev learningLog[_cloneId][_skillId] => LearningLog
     struct LearningLog {
         uint256 learningPoints;
         uint256 skillLevel;
     }
-    mapping(uint256 => mapping(uint256 => LearningLog)) public learningLog;
+    mapping(uint256 => mapping(uint256 => LearningLog)) learningLog;
 
     event LearningStateUpdated(uint256 cloneId);
 
@@ -98,6 +98,22 @@ contract Learning is UniversalData {
         _resetAndUpdateLearningState(_cloneId);
 
         emit LearningStateUpdated(_cloneId);
+    }
+
+    function getLearningLog(uint256 _cloneId, uint256 _skillId)
+        external
+        view
+        returns (LearningLog memory)
+    {
+        return learningLog[_cloneId][_skillId];
+    }
+
+    function getLearningState(uint256 _cloneId)
+        external
+        view
+        returns (LearningState memory)
+    {
+        return learningState[_cloneId];
     }
 
     /// @notice private functions

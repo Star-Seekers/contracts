@@ -7,9 +7,6 @@ import "./interfaces/IClones.sol";
 import "./tokens/CRED.sol";
 
 contract CloneMarket is UniversalData {
-    uint256 public salesTax = 350;
-    address public federation;
-
     event CloneListed(uint256 cloneId, uint256 price);
     event CloneListingCancelled(uint256 cloneId);
     event ClonePurchased(
@@ -19,11 +16,7 @@ contract CloneMarket is UniversalData {
         uint256 amount
     );
 
-    constructor(address _gameManager, address _federation)
-        UniversalData(_gameManager)
-    {
-        federation = _federation;
-    }
+    constructor(address _gameManager) UniversalData(_gameManager) {}
 
     function list(uint256 _cloneId, uint256 _price)
         public
@@ -77,11 +70,11 @@ contract CloneMarket is UniversalData {
         );
 
         cred.transferFrom(msg.sender, address(this), cloneData.price);
-        uint256 federationCut = cloneData.price * (salesTax / 100);
-        uint256 sellerCut = cloneData.price -
-            (cloneData.price * (salesTax / 100));
+        uint256 federationCut = cloneData.price *
+            (gameManager.salesTax() / 100);
+        uint256 sellerCut = cloneData.price - federationCut;
 
-        cred.transfer(federation, federationCut);
+        cred.transfer(gameManager.federation(), federationCut);
         cred.transfer(cloneData.owner, sellerCut);
 
         IClone cloneInstance = IClone(gameManager.contractAddresses("Clone"));
@@ -97,9 +90,5 @@ contract CloneMarket is UniversalData {
             cloneData.owner,
             cloneData.price
         );
-    }
-
-    function updateFederation(address _newFederationAddress) public onlyAdmin {
-        federation = _newFederationAddress;
     }
 }

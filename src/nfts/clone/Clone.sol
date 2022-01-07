@@ -48,7 +48,7 @@ contract Clone is ERC721, UniversalData {
         address _from,
         address _to,
         uint256 _tokenId
-    ) public virtual override {
+    ) public virtual override notForSale(_tokenId) {
         //solhint-disable-next-line max-line-length
         require(
             _isApprovedOrOwner(_msgSender(), _tokenId),
@@ -82,7 +82,7 @@ contract Clone is ERC721, UniversalData {
         address _to,
         uint256 _tokenId,
         bytes memory _data
-    ) public virtual override {
+    ) public virtual override notForSale(_tokenId) {
         require(
             _isApprovedOrOwner(_msgSender(), _tokenId),
             "ERC721: transfer caller is not owner nor approved"
