@@ -35,7 +35,7 @@ contract UniversalData {
     }
     modifier onlyCloneOwner(address _owner, uint256 _cloneId) {
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
         ICloningFacility.CloneData memory cloneData = cloningFacility
             .getCloneData(_cloneId);
@@ -45,7 +45,7 @@ contract UniversalData {
     }
     modifier notForSale(uint256 _cloneId) {
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
         ICloningFacility.CloneData memory cloneData = cloningFacility
             .getCloneData(_cloneId);

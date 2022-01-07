@@ -134,7 +134,7 @@ contract Learning is UniversalData {
         }
 
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
 
         uint256 learningPointsPerMinute = _calculateLearningPointsPerMinute(
@@ -156,7 +156,7 @@ contract Learning is UniversalData {
         uint256 _cloneId
     ) internal view returns (uint256) {
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
 
         uint256 primaryAttributeLevel = cloningFacility.getCloneStatLevel(

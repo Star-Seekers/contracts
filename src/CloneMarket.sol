@@ -28,7 +28,7 @@ contract CloneMarket is UniversalData {
             "Star Seekers: Market not approved"
         );
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
 
         cloningFacility.changeSalesStatus(_cloneId, true, _price);
@@ -41,7 +41,7 @@ contract CloneMarket is UniversalData {
         onlyCloneOwner(msg.sender, _cloneId)
     {
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
 
         cloningFacility.changeSalesStatus(_cloneId, false, 0);
@@ -51,7 +51,7 @@ contract CloneMarket is UniversalData {
 
     function buy(uint256 _cloneId) public {
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("Clones")
+            gameManager.contractAddresses("CloningFacility")
         );
         ICloningFacility.CloneData memory cloneData = cloningFacility
             .getCloneData(_cloneId);
@@ -77,11 +77,7 @@ contract CloneMarket is UniversalData {
         cred.transfer(cloneData.owner, sellerCut);
 
         IClone cloneInstance = IClone(gameManager.contractAddresses("Clone"));
-        cloneInstance.safeTransferFrom(
-            cloneData.owner,
-            address(this),
-            _cloneId
-        );
+        cloneInstance.safeTransferFrom(cloneData.owner, msg.sender, _cloneId);
 
         emit ClonePurchased(
             _cloneId,

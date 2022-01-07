@@ -5,6 +5,7 @@ import "./interfaces/UniversalData.sol";
 import "./interfaces/IClone.sol";
 import "./interfaces/IStats.sol";
 import "./interfaces/ICRED.sol";
+import "./interfaces/IChainlinkAggregator.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract CloningFacility is UniversalData {
@@ -25,7 +26,27 @@ contract CloningFacility is UniversalData {
 
     constructor(address _gameManager) UniversalData(_gameManager) {}
 
-    function create(string memory _uri) public notInMaintenance {
+    /// @notice Creates a new clone
+    /// @dev gets the price of the chains base token from chainlink
+    /// sends the cost of token which is adjustable on game manager to the contract, and
+    /// the contract sends it to the federation address.
+    function create(string memory _uri) public payable notInMaintenance {
+        ICred cred = ICred(gameManager.contractAddresses("CRED"));
+
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
+            gameManager.chainlinkFeed()
+        );
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+
+        uint256 cloneCostInBaseToken = gameManager.cloneCost() / uint256(price);
+        require(
+            msg.value >= cloneCostInBaseToken,
+            "Star Seekers: Invalid payment amount"
+        );
+
+        (bool sent, ) = payable(address(this)).call{value: msg.value}("");
+        require(sent, "Star Seekers: Failed to send payment token");
+
         uint256 newCloneId = IClone(gameManager.contractAddresses("Clone"))
             .create(msg.sender);
 
@@ -39,8 +60,6 @@ contract CloningFacility is UniversalData {
 
         cloneData[newCloneId] = data;
         clonesOwnedByAddress[msg.sender].push(data.id);
-
-        ICred cred = ICred(gameManager.contractAddresses("CRED"));
 
         if (
             gameManager.startingCred() > 0 &&
@@ -129,5 +148,9 @@ contract CloningFacility is UniversalData {
         uint256 _amount
     ) external onlyGameContract {
         stats[_cloneId][_stat] -= _amount;
+    }
+
+    receive() external payable {
+        gameManager.federation().transfer(msg.value);
     }
 }

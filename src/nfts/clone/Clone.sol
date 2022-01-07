@@ -39,7 +39,7 @@ contract Clone is ERC721, UniversalData {
             "ERC721Metadata: URI query for nonexistent token"
         );
         return
-            ICloningFacility(gameManager.contractAddresses("Clones"))
+            ICloningFacility(gameManager.contractAddresses("CloningFacility"))
                 .getCloneUri(_tokenId);
     }
 
@@ -54,10 +54,8 @@ contract Clone is ERC721, UniversalData {
             "ERC721: transfer caller is not owner nor approved"
         );
 
-        ICloningFacility(gameManager.contractAddresses("Clones")).changeOwner(
-            _to,
-            _tokenId
-        );
+        ICloningFacility(gameManager.contractAddresses("CloningFacility"))
+            .changeOwner(_to, _tokenId);
 
         _transfer(_from, _to, _tokenId);
     }
@@ -87,10 +85,8 @@ contract Clone is ERC721, UniversalData {
             "ERC721: transfer caller is not owner nor approved"
         );
 
-        ICloningFacility(gameManager.contractAddresses("Clones")).changeOwner(
-            _to,
-            _tokenId
-        );
+        ICloningFacility(gameManager.contractAddresses("CloningFacility"))
+            .changeOwner(_to, _tokenId);
 
         _safeTransfer(_from, _to, _tokenId, _data);
     }

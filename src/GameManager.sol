@@ -2,11 +2,13 @@
 pragma solidity ^0.8.0;
 
 contract GameManager {
-    bool public maintenance = false;
     address public admin;
+    address public chainlinkFeed;
+    address payable public federation;
+    bool public maintenance = false;
+    uint256 public cloneCost = 50;
     uint256 public salesTax = 350;
     uint256 public startingCred = 10000;
-    address public federation;
 
     mapping(string => address) public contractAddresses;
     mapping(address => bool) public hasReceivedStartingCred;
@@ -47,11 +49,18 @@ contract GameManager {
         isGameContract[contractAddress] = false;
     }
 
+    function setChainlinkFeed(address _feedContract) public onlyAdmin {
+        chainlinkFeed = _feedContract;
+    }
+
     function setMaintenance(bool _status) public onlyAdmin {
         maintenance = _status;
     }
 
-    function setFederation(address _newFederationAddress) public onlyAdmin {
+    function setFederation(address payable _newFederationAddress)
+        public
+        onlyAdmin
+    {
         federation = _newFederationAddress;
     }
 
