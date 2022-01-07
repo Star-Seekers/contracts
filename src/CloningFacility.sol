@@ -36,9 +36,10 @@ contract CloningFacility is UniversalData {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(
             gameManager.chainlinkFeed()
         );
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 purchaseTokenUsdPrice, , , ) = priceFeed.latestRoundData();
 
-        uint256 cloneCostInBaseToken = gameManager.cloneCost() / uint256(price);
+        uint256 cloneCostInBaseToken = gameManager.cloneCost() /
+            uint256(purchaseTokenUsdPrice);
         require(
             msg.value >= cloneCostInBaseToken,
             "Star Seekers: Invalid payment amount"
