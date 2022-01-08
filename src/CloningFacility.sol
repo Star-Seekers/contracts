@@ -9,7 +9,6 @@ import "./interfaces/IChainlinkAggregator.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract CloningFacility is UniversalData {
-    /// @dev cloneData[_cloneId] => Data
     struct CloneData {
         address owner;
         bool for_sale;
@@ -17,9 +16,12 @@ contract CloningFacility is UniversalData {
         uint256 price;
         uint256 id;
     }
+
+    /// @notice cloneData[cloneId] => CloneData struct
     mapping(uint256 => CloneData) cloneData;
+    /// @notice clonesOwnedByAddress[playerWalletAddress] => array[cloneId]
     mapping(address => uint256[]) clonesOwnedByAddress;
-    /// @dev Clone stats
+    /// @notice stats[cloneId][Stat.stat] => statLevel
     mapping(uint256 => mapping(IStats.Stat => uint256)) stats;
 
     event CloneCreated(uint256 cloneId, address owner);
@@ -28,9 +30,12 @@ contract CloningFacility is UniversalData {
 
     /// @notice Creates a new clone
     /// @dev gets the price of the chains base token from chainlink
-    /// sends the cost of token which is adjustable on game manager to the contract, and
-    /// the contract sends it to the federation address.
+    /// @param _uri json IPFS endpoint
     function create(string memory _uri) public payable notInMaintenance {
+        require(
+            gameManager.chainlinkFeed() != address(0),
+            "Star Seekers: No chainlink feed set"
+        );
         ICred cred = ICred(gameManager.contractAddresses("CRED"));
 
         AggregatorV3Interface priceFeed = AggregatorV3Interface(
@@ -73,9 +78,49 @@ contract CloningFacility is UniversalData {
         emit CloneCreated(newCloneId, msg.sender);
     }
 
+    /// @notice changes the uri for a given clone id
+    /// @dev should only be callable by other game contracts
+    /// @param _cloneId uint256 cloneId
+    /// @return CloneData struct
+    function getCloneData(uint256 _cloneId)
+        public
+        view
+        returns (CloneData memory)
+    {
+        return cloneData[_cloneId];
+    }
+
+    /// @notice gets the level for a specific stat on a specific clone
+    /// @dev should only be callable by other game contracts
+    /// @param _cloneId clone id
+    /// @param _stat clone stat to retrieve level of
+    /// @return uint256 clone stat level
+    function getCloneStatLevel(uint256 _cloneId, IStats.Stat _stat)
+        public
+        view
+        returns (uint256)
+    {
+        return stats[_cloneId][_stat];
+    }
+
+    /// @notice gets clone URI
+    /// @dev should be IPFS JSON endpoint
+    /// @param _cloneId clone id
+    /// @return string clone uri
+    function getCloneUri(uint256 _cloneId) public view returns (string memory) {
+        string memory uri = cloneData[_cloneId].uri;
+        return uri;
+    }
+
+    /// @notice changes the owner of a given clone to the given address
+    /// @dev should only be callable by other game contracts
+    /// @param _newOwner address of the new owner
+    /// @param _cloneId cloneId of the
+    /// @return bool success
     function changeOwner(address _newOwner, uint256 _cloneId)
         external
         onlyGameContract
+        returns (bool)
     {
         uint256[] memory clones = clonesOwnedByAddress[
             cloneData[_cloneId].owner
@@ -89,69 +134,76 @@ contract CloningFacility is UniversalData {
         }
         cloneData[_cloneId].owner = _newOwner;
         clonesOwnedByAddress[_newOwner].push(_cloneId);
+
+        return true;
     }
 
-    function changeSalesStatus(
+    /// @notice changes the owner of a given clone to the given address
+    /// @dev should only be callable by other game contracts
+    /// @param _cloneId uint256 clone id
+    /// @param _forSale bool sale state
+    /// @param _price uint256 price of clone
+    /// @return bool success
+    function changeSalesState(
         uint256 _cloneId,
-        bool _status,
+        bool _forSale,
         uint256 _price
-    ) external onlyGameContract {
-        cloneData[_cloneId].for_sale = _status;
+    ) external onlyGameContract returns (bool) {
+        cloneData[_cloneId].for_sale = _forSale;
+
         cloneData[_cloneId].price = _price;
+
+        return true;
     }
 
+    /// @notice changes the uri for a given clone id
+    /// @dev should only be callable by other game contracts
+    /// @param _cloneId uint256 cloneId
+    /// @param _uri string ipfs url for json endpoint
     function changeUri(uint256 _cloneId, string memory _uri)
         external
         onlyGameContract
+        returns (bool)
     {
         cloneData[_cloneId].uri = _uri;
+
+        return true;
     }
 
-    function getCloneData(uint256 _cloneId)
-        external
-        view
-        onlyGameContract
-        returns (CloneData memory)
-    {
-        return cloneData[_cloneId];
-    }
-
-    function getCloneStatLevel(uint256 _cloneId, IStats.Stat _stat)
-        external
-        view
-        onlyGameContract
-        returns (uint256)
-    {
-        return stats[_cloneId][_stat];
-    }
-
-    function getCloneUri(uint256 _cloneId)
-        external
-        view
-        onlyGameContract
-        returns (string memory)
-    {
-        string memory uri = cloneData[_cloneId].uri;
-        return uri;
-    }
-
+    /// @notice increases a clones stat by the given amount
+    /// @dev should only be callable by other game contracts
+    /// @param _cloneId clone id
+    /// @param _stat stat enum
+    /// @param _amount uin256 amount to increase stat by
+    /// @return bool success
     function increaseStat(
         uint256 _cloneId,
         IStats.Stat _stat,
         uint256 _amount
-    ) external onlyGameContract {
+    ) external onlyGameContract returns (bool) {
         stats[_cloneId][_stat] += _amount;
+
+        return true;
     }
 
+    /// @notice decreases a clones stat by the given amount
+    /// @dev should only be callable by other game contracts
+    /// @param _cloneId clone id
+    /// @param _stat stat enum
+    /// @param _amount uin256 amount to decrease stat by
+    /// @return bool success
     function decreaseStat(
         uint256 _cloneId,
         IStats.Stat _stat,
         uint256 _amount
-    ) external onlyGameContract {
+    ) external onlyGameContract returns (bool) {
         stats[_cloneId][_stat] -= _amount;
+
+        return true;
     }
 
     receive() external payable {
-        gameManager.federation().transfer(msg.value);
+        (bool sent, ) = gameManager.federation().call{value: msg.value}("");
+        require(sent, "Star Seekers: Failed to send payment token");
     }
 }

@@ -7,8 +7,11 @@ import "./interfaces/ICloningFacility.sol";
 import "./tokens/CRED.sol";
 
 contract CloneMarket is UniversalData {
+    /// @notice emitted when a clone is listed on the market
     event CloneListed(uint256 cloneId, uint256 price);
+    /// @notice emitted when a clone is removed from the market
     event CloneListingCancelled(uint256 cloneId);
+    /// @notice emitted when a clone is purchased from the market
     event ClonePurchased(
         uint256 cloneId,
         address buyer,
@@ -17,6 +20,11 @@ contract CloneMarket is UniversalData {
     );
 
     constructor(address _gameManager) UniversalData(_gameManager) {}
+
+    /// @notice Lists a clone on the clone market
+    /// @dev only clone owner should be able to call this function for a given clone
+    /// @param _cloneId the id of the clone to list for sale
+    /// @param _price the price to list the clone for in CRED
 
     function list(uint256 _cloneId, uint256 _price)
         public
@@ -36,6 +44,9 @@ contract CloneMarket is UniversalData {
         emit CloneListed(_cloneId, _price);
     }
 
+    /// @notice Removes an active clone listing from the market
+    /// @dev only clone owner should be able to call this function
+    /// @param _cloneId the id of the clone that is listed for sale
     function cancel(uint256 _cloneId)
         public
         onlyCloneOwner(msg.sender, _cloneId)
@@ -49,6 +60,8 @@ contract CloneMarket is UniversalData {
         emit CloneListingCancelled(_cloneId);
     }
 
+    /// @notice Buys a clone listed on the market
+    /// @param _cloneId the id of the clone that is being purchased
     function buy(uint256 _cloneId) public {
         ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("CloningFacility")

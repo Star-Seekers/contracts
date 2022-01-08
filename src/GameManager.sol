@@ -6,7 +6,7 @@ contract GameManager {
     address public chainlinkFeed;
     address payable public federation;
     bool public maintenance = false;
-    uint256 public cloneCost = 50;
+    uint256 public cloneCost = 100;
     uint256 public salesTax = 350;
     uint256 public startingCred = 10000;
 

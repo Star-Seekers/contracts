@@ -12,15 +12,21 @@ interface ICloningFacility {
         uint256 id;
     }
 
-    function changeOwner(address newOwner, uint256 cloneId) external;
+    function create(string memory uri) external payable;
+
+    function changeOwner(address newOwner, uint256 cloneId)
+        external
+        returns (bool);
 
     function changeSalesStatus(
         uint256 cloneId,
         bool status,
         uint256 price
-    ) external;
+    ) external returns (bool);
 
-    function changeUri(uint256 cloneId, string memory uri) external;
+    function changeUri(uint256 cloneId, string memory uri)
+        external
+        returns (bool);
 
     function getCloneData(uint256 cloneId)
         external
@@ -38,11 +44,11 @@ interface ICloningFacility {
         uint256 cloneId,
         IStats.Stat stat,
         uint256 amount
-    ) external;
+    ) external returns (bool);
 
     function decreaseStat(
         uint256 cloneId,
         IStats.Stat stat,
         uint256 amount
-    ) external;
+    ) external returns (bool);
 }

@@ -64,4 +64,18 @@ module.exports = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+  namedAccounts: {
+    playerOne: {
+      default: 0,
+    },
+    admin: {
+      default: 1,
+    },
+    federation: {
+      default: 3,
+    },
+    userOne: {
+      default: 3,
+    },
+  },
 };

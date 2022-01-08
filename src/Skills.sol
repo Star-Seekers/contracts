@@ -41,6 +41,7 @@ contract Skills is UniversalData {
         _skill.id = skillIndex;
         _skill.disabled = false;
         skillById[skillIndex] = _skill;
+        skillsByGroupId[_skill.group_id].push(_skill);
         skillIndex += 1;
 
         emit SkillUpdated(_skill.id);
@@ -77,34 +78,6 @@ contract Skills is UniversalData {
         skillGroupById[_skillGroupId].disabled = false;
 
         emit SkillGroupUpdated(_skillGroupId);
-    }
-
-    function getStatName(IStats.Stat _stat)
-        public
-        pure
-        returns (string memory)
-    {
-        if (_stat == IStats.Stat.charisma) {
-            return "Charisma";
-        }
-
-        if (_stat == IStats.Stat.ingenuity) {
-            return "Ingenuity";
-        }
-
-        if (_stat == IStats.Stat.intelligence) {
-            return "Intelligence";
-        }
-
-        if (_stat == IStats.Stat.spirit) {
-            return "Spirit";
-        }
-
-        if (_stat == IStats.Stat.toughness) {
-            return "Toughness";
-        }
-
-        return "";
     }
 
     function getSkillById(uint256 _skillId)

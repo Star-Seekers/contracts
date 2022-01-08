@@ -14,21 +14,25 @@ contract Learning is UniversalData {
         uint256 learning;
         uint256 start_time;
     }
-    /// @dev learningState[_cloneId] => LearningState
+    /// @notice learningState[_cloneId] => LearningState
     mapping(uint256 => LearningState) learningState;
 
-    /// @dev learningLog[_cloneId][_skillId] => LearningLog
     struct LearningLog {
         uint256 learningPoints;
         uint256 skillLevel;
     }
+    /// @notice learningLog[_cloneId][_skillId] => LearningLog
     mapping(uint256 => mapping(uint256 => LearningLog)) learningLog;
 
+    /// @notice emitted any time we update the learning state
     event LearningStateUpdated(uint256 cloneId);
 
     constructor(address _gameManager) UniversalData(_gameManager) {}
 
     /// @notice after training has completed call this function to update state
+    /// @dev can only be called when game is not in maintenance, the clone is not for sale,
+    /// and only the clone owner.
+    /// @param _cloneId the clone id to complete learning on
     function completeLearning(uint256 _cloneId)
         public
         notInMaintenance
@@ -49,7 +53,11 @@ contract Learning is UniversalData {
         emit LearningStateUpdated(_cloneId);
     }
 
-    /// @notice public functions
+    /// @notice start training on a specific clone
+    /// @dev can only be called when game is not in maintenance, the clone is not for sale,
+    /// and only the clone owner.
+    /// @param _cloneId clone id to start training on
+    /// @param _skillId skill id to start training on
     function startLearning(uint256 _cloneId, uint256 _skillId)
         public
         notInMaintenance
@@ -79,7 +87,10 @@ contract Learning is UniversalData {
         emit LearningStateUpdated(_cloneId);
     }
 
-    /// @notice public functions
+    /// @notice stop training on a skill that's still in training
+    /// @dev can only be called when game is not in maintenance, the clone is not for sale,
+    /// and only the clone owner.
+    /// @param _cloneId the clone id to complete learning on
     function stopLearning(uint256 _cloneId)
         public
         notInMaintenance
@@ -100,24 +111,33 @@ contract Learning is UniversalData {
         emit LearningStateUpdated(_cloneId);
     }
 
+    /// @notice retrieve a clones learning log for a specific skill
+    /// @param _cloneId the clone id to retrieve
+    /// @param _skillId the skill id of the skill to retrieve the learning log of.
+    /// @return LearningLog
     function getLearningLog(uint256 _cloneId, uint256 _skillId)
-        external
+        public
         view
         returns (LearningLog memory)
     {
         return learningLog[_cloneId][_skillId];
     }
 
+    /// @notice get the learning state of a specific clone
+    /// @param _cloneId the clone id to retrieve
+    /// @return LearningState
     function getLearningState(uint256 _cloneId)
-        external
+        public
         view
         returns (LearningState memory)
     {
         return learningState[_cloneId];
     }
 
-    /// @notice private functions
-    /// @notice returns time remaining in minutes as a timestamp
+    /// @notice calculate learning points earned
+    /// @param _skill Skill enum skill they are training
+    /// @param _cloneId the id of a clone
+    /// @return uint256 returns time remaining in minutes as a timestamp
     function _calculateLearningPointsEarned(
         ISkills.Skill memory _skill,
         uint256 _cloneId
@@ -151,6 +171,10 @@ contract Learning is UniversalData {
         return trainingTime * learningPointsPerMinute;
     }
 
+    /// @notice calculate the amount of learning time remaining based on the clones stats
+    /// @param _skill Skill enum
+    /// @param _cloneId cloneId the cloneId
+    /// @return uint256 amount of time in minutes remaining
     function _calculateLearningTimeRemaining(
         ISkills.Skill memory _skill,
         uint256 _cloneId
@@ -186,6 +210,11 @@ contract Learning is UniversalData {
     }
 
     /// @notice calculates required learning points based on player stats
+    /// @param _skill skill struct
+    /// @param _cloneId cloneId
+    /// @param _primaryPlayerStatAttribute primary player stat level
+    /// @param _secondaryPlayerStatAttribute secondary player stat level
+    /// @return uint256 learning points required to level a skill up
     function _calculateLearningPointsRequired(
         ISkills.Skill memory _skill,
         uint256 _cloneId,
@@ -200,7 +229,12 @@ contract Learning is UniversalData {
             (_primaryPlayerStatAttribute + (_secondaryPlayerStatAttribute / 2));
     }
 
-    /// @notice calculates base learning points based on skill multiplier and the skill level being trained
+    /// @notice calculates base learning points based on skill multiplier and the skill
+    /// level being trained
+    /// @param _multiplier skill multiplier, can be found on Skill struct
+    /// @param _skillLevel players skill level
+    /// @return uint256 base learning points
+
     function _calculateBaseLearningPoints(
         uint256 _multiplier,
         uint256 _skillLevel // player skill level
@@ -208,11 +242,14 @@ contract Learning is UniversalData {
         return (250 * _multiplier) * 6**(_skillLevel - 1);
     }
 
-    /// @notice calculates how many learning points a player earns based on their stats
+    /// @notice calculates how many learning points a player earns based on their stats per minute
+    /// @param _primaryPlayerStatAttribute players stat level
+    /// @param _secondaryPlayerStatAttribute secondary stat level
+    /// @return uint256 learning points per minute based on the stat levels of the player
     function _calculateLearningPointsPerMinute(
         uint256 _primaryPlayerStatAttribute, // player stat attribute
         uint256 _secondaryPlayerStatAttribute // player stat attribute
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         return
             (_primaryPlayerStatAttribute * 1) /
             2 +
@@ -221,6 +258,9 @@ contract Learning is UniversalData {
     }
 
     /// @notice checks if a skill meets the requirements to be learned
+    /// @param _skill Skill struct
+    /// @param _cloneId clone id
+    /// @return bool success
     function _isLearnable(ISkills.Skill memory _skill, uint256 _cloneId)
         internal
         view
@@ -243,7 +283,13 @@ contract Learning is UniversalData {
         return true;
     }
 
-    function _resetAndUpdateLearningState(uint256 _cloneId) internal {
+    /// @notice resets the learning state and updates the learning log
+    /// @param _cloneId cloneId
+    /// @return bool success
+    function _resetAndUpdateLearningState(uint256 _cloneId)
+        internal
+        returns (bool)
+    {
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
         ISkills skillsInstance = ISkills(
             gameManager.contractAddresses("Skills")
@@ -261,5 +307,7 @@ contract Learning is UniversalData {
         learningState[_cloneId].end_time = 0;
         learningState[_cloneId].is_learning = false;
         learningState[_cloneId].learning = 0;
+
+        return true;
     }
 }
