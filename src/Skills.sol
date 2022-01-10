@@ -102,7 +102,7 @@ contract Skills is UniversalData {
 
     /// @notice get skills by group id
     /// @param _skillGroupId skill group id
-    /// @return Skill[] array of Skill structs
+    /// @return uint256[] array of skill ids
     function getSkillsByGroupId(uint256 _skillGroupId)
         external
         view
@@ -111,6 +111,9 @@ contract Skills is UniversalData {
         return skillsByGroupId[_skillGroupId];
     }
 
+    /// @notice gets a Skill by name
+    /// @param _name string name of skill lookup
+    /// @return Skill struct
     function getSkillByName(string memory _name)
         external
         view
