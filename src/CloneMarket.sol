@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "./interfaces/UniversalData.sol";
 import "./interfaces/IClone.sol";
 import "./interfaces/ICloningFacility.sol";
+import "./interfaces/ILearning.sol";
+import "./interfaces/ISkills.sol";
 import "./tokens/CRED.sol";
 
 contract CloneMarket is UniversalData {
@@ -82,8 +84,22 @@ contract CloneMarket is UniversalData {
         );
 
         cred.transferFrom(msg.sender, address(this), cloneData.price);
-        uint256 federationCut = cloneData.price *
-            (gameManager.salesTax() / 100);
+
+        ISkills skillsInstance = ISkills(
+            gameManager.contractAddresses("Skills")
+        );
+        ISkills.Skill memory comptroller = skillsInstance.getSkillByName(
+            "Comptroller"
+        );
+        ILearning.LearningLog memory comptrollerLearningLog = ILearning(
+            gameManager.contractAddresses("Learning")
+        ).getLearningLog(_cloneId, comptroller.id);
+
+        /// @dev calculate tax paid based on skill level of clone being sold
+        uint256 baseTaxPercent = gameManager.salesTax();
+        uint256 skillTaxPercent = baseTaxPercent -
+            ((comptrollerLearningLog.skill_level * 5) / 10);
+        uint256 federationCut = (cloneData.price * skillTaxPercent) / 100;
         uint256 sellerCut = cloneData.price - federationCut;
 
         cred.transfer(gameManager.federation(), federationCut);

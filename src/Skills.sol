@@ -22,7 +22,9 @@ contract Skills is UniversalData {
     }
 
     /// @notice skillById[skillId] => Skill struct;
-    mapping(uint256 => Skill) internal skillById;
+    mapping(uint256 => Skill) skillById;
+    /// @notice skillByName["SkillName"] => Skill struct;
+    mapping(string => Skill) skillByName;
 
     struct SkillGroup {
         uint256 id;
@@ -48,6 +50,7 @@ contract Skills is UniversalData {
         _skill.id = skillIndex;
         skillById[skillIndex] = _skill;
         skillsByGroupId[_skill.group_id].push(_skill.id);
+        skillByName[_skill.name] = _skill;
         skillIndex += 1;
 
         emit SkillAdded(_skill.id);
@@ -66,16 +69,22 @@ contract Skills is UniversalData {
     /// @notice removes a skill from the database and removes it from the skillgroup
     /// @param _skillId skill id
     function removeSkill(uint256 _skillId) public onlyAdmin {
-        uint256[] memory skills = skillsByGroupId[skillById[_skillId].group_id];
+        uint256[] memory skillIds = skillsByGroupId[
+            skillById[_skillId].group_id
+        ];
 
-        for (uint256 i = 0; i <= skills.length; i += 1) {
-            if (skills[i] == _skillId) {
-                delete skills[i];
+        Skill memory skill = skillById[_skillId];
 
-                skillsByGroupId[skillById[_skillId].group_id] = skills;
+        delete skillByName[skill.name];
+        delete skillById[_skillId];
+
+        for (uint256 i = 0; i <= skillIds.length; i += 1) {
+            if (skillIds[i] == _skillId) {
+                delete skillIds[i];
+
+                skillsByGroupId[skillById[_skillId].group_id] = skillIds;
             }
         }
-        delete skillById[_skillId];
 
         emit SkillRemoved(_skillId);
     }
@@ -100,5 +109,13 @@ contract Skills is UniversalData {
         returns (uint256[] memory)
     {
         return skillsByGroupId[_skillGroupId];
+    }
+
+    function getSkillByName(string memory _name)
+        external
+        view
+        returns (Skill memory)
+    {
+        return skillByName[_name];
     }
 }

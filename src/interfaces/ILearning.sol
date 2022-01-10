@@ -10,8 +10,8 @@ interface ILearning {
         uint256 start_time;
     }
     struct LearningLog {
-        uint256 learningPoints;
-        uint256 skillLevel;
+        uint256 learning_points;
+        uint256 skill_level;
     }
 
     function getLearningLog(uint256 cloneId, uint256 skillId)

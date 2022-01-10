@@ -21,4 +21,6 @@ interface ISkills {
     function getSkillsByGroupId(uint256 skillGroupId)
         external
         returns (uint256[] memory);
+
+    function getSkillByName(string memory name) external returns (Skill memory);
 }

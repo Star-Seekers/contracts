@@ -18,8 +18,8 @@ contract Learning is UniversalData {
     mapping(uint256 => LearningState) learningState;
 
     struct LearningLog {
-        uint256 learningPoints;
-        uint256 skillLevel;
+        uint256 learning_points;
+        uint256 skill_level;
     }
     /// @notice learningLog[_cloneId][_skillId] => LearningLog
     mapping(uint256 => mapping(uint256 => LearningLog)) learningLog;
@@ -224,8 +224,8 @@ contract Learning is UniversalData {
         return
             (_calculateBaseLearningPoints(
                 _skill.multiplier,
-                learningLog[_cloneId][_skill.id].skillLevel + 1
-            ) - learningLog[_cloneId][_skill.id].learningPoints) /
+                learningLog[_cloneId][_skill.id].skill_level + 1
+            ) - learningLog[_cloneId][_skill.id].learning_points) /
             (_primaryPlayerStatAttribute + (_secondaryPlayerStatAttribute / 2));
     }
 
@@ -268,14 +268,14 @@ contract Learning is UniversalData {
     {
         /// @dev checks that players has not reached max skill level
         require(
-            learningLog[_cloneId][_skill.id].skillLevel < 5,
+            learningLog[_cloneId][_skill.id].skill_level < 5,
             "Star Seekers: Skill already at max"
         );
         /// @dev checks for skill dependencies
         if (_skill.dependency) {
             /// @dev checks that the dependent skill is at level 5
             require(
-                learningLog[_cloneId][_skill.dependency_id].skillLevel == 5,
+                learningLog[_cloneId][_skill.dependency_id].skill_level == 5,
                 "Skill Seekers: Dependent skill must be level 5 before training"
             );
         }
@@ -300,7 +300,7 @@ contract Learning is UniversalData {
         );
 
         learningLog[_cloneId][learningState[_cloneId].learning]
-            .learningPoints = _calculateLearningPointsEarned(skill, _cloneId);
+            .learning_points = _calculateLearningPointsEarned(skill, _cloneId);
 
         /// @dev reset learning state
         learningState[_cloneId].start_time = 0;
