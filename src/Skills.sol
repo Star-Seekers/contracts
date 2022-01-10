@@ -10,7 +10,6 @@ contract Skills is UniversalData {
 
     struct Skill {
         bool dependency;
-        bool disabled;
         IStats.Stat primary_attribute;
         IStats.Stat secondary_attribute;
         string icon;
@@ -22,64 +21,68 @@ contract Skills is UniversalData {
         uint256[5] bonus_per_level;
     }
 
+    /// @notice skillById[skillId] => Skill struct;
     mapping(uint256 => Skill) internal skillById;
 
     struct SkillGroup {
-        bool disabled;
         uint256 id;
         string name;
     }
+    /// @notice skillGroupById[skillGroupId] => SkillGroup struct;
     mapping(uint256 => SkillGroup) internal skillGroupById;
-    mapping(uint256 => Skill[]) internal skillsByGroupId;
+    /// @notice skillsByGroupId[skillGroupId] => skillId[] array of skill ids;
+    mapping(uint256 => uint256[]) internal skillsByGroupId;
 
-    event SkillUpdated(uint256 skillId);
-    event SkillGroupUpdated(uint256 skillGroupId);
+    /// @notice emitted when a new skill is added to the database by the admin;
+    event SkillAdded(uint256 skillId);
+    /// @notice emitted when a new skill is removed from the database by the admin;
+    event SkillRemoved(uint256 skillId);
+    /// @notice emitted when a new skill group is added to the database by the admin;
+    event SkillGroupAdded(uint256 skillGroupId);
 
     constructor(address _gameManager) UniversalData(_gameManager) {}
 
+    /// @notice adds a new skill to the database of trainable skills and adds it to a skill group
+    /// @param _skill Skill struct
     function addSkill(Skill memory _skill) public onlyAdmin {
         _skill.id = skillIndex;
-        _skill.disabled = false;
         skillById[skillIndex] = _skill;
-        skillsByGroupId[_skill.group_id].push(_skill);
+        skillsByGroupId[_skill.group_id].push(_skill.id);
         skillIndex += 1;
 
-        emit SkillUpdated(_skill.id);
+        emit SkillAdded(_skill.id);
     }
 
+    /// @notice adds a new skill group to the database
+    /// @param _skillGroup SkillGroup struct
     function addSkillGroup(SkillGroup memory _skillGroup) public onlyAdmin {
         _skillGroup.id = skillGroupIndex;
-        _skillGroup.disabled = false;
         skillGroupById[skillGroupIndex] = _skillGroup;
         skillGroupIndex += 1;
 
-        emit SkillGroupUpdated(_skillGroup.id);
+        emit SkillGroupAdded(_skillGroup.id);
     }
 
-    function disableSkill(uint256 _skillId) public onlyAdmin {
-        skillById[_skillId].disabled = true;
+    /// @notice removes a skill from the database and removes it from the skillgroup
+    /// @param _skillId skill id
+    function removeSkill(uint256 _skillId) public onlyAdmin {
+        uint256[] memory skills = skillsByGroupId[skillById[_skillId].group_id];
 
-        emit SkillUpdated(_skillId);
+        for (uint256 i = 0; i <= skills.length; i += 1) {
+            if (skills[i] == _skillId) {
+                delete skills[i];
+
+                skillsByGroupId[skillById[_skillId].group_id] = skills;
+            }
+        }
+        delete skillById[_skillId];
+
+        emit SkillRemoved(_skillId);
     }
 
-    function disableSkillGroup(uint256 _skillGroupId) public onlyAdmin {
-        skillGroupById[_skillGroupId].disabled = true;
-
-        emit SkillGroupUpdated(_skillGroupId);
-    }
-
-    function enableSkill(uint256 _skillId) public onlyAdmin {
-        skillById[_skillId].disabled = false;
-
-        emit SkillUpdated(_skillId);
-    }
-
-    function enableSkillGroup(uint256 _skillGroupId) public onlyAdmin {
-        skillGroupById[_skillGroupId].disabled = false;
-
-        emit SkillGroupUpdated(_skillGroupId);
-    }
-
+    /// @notice get a Skill struct by id
+    /// @param _skillId skill id
+    /// @return Skill struct
     function getSkillById(uint256 _skillId)
         external
         view
@@ -88,10 +91,13 @@ contract Skills is UniversalData {
         return skillById[_skillId];
     }
 
+    /// @notice get skills by group id
+    /// @param _skillGroupId skill group id
+    /// @return Skill[] array of Skill structs
     function getSkillsByGroupId(uint256 _skillGroupId)
         external
         view
-        returns (Skill[] memory skills)
+        returns (uint256[] memory)
     {
         return skillsByGroupId[_skillGroupId];
     }

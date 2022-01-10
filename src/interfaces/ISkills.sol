@@ -5,7 +5,6 @@ import "./IStats.sol";
 interface ISkills {
     struct Skill {
         bool dependency;
-        bool disabled;
         IStats.Stat primary_attribute;
         IStats.Stat secondary_attribute;
         string icon;
@@ -21,5 +20,5 @@ interface ISkills {
 
     function getSkillsByGroupId(uint256 skillGroupId)
         external
-        returns (Skill[] memory);
+        returns (uint256[] memory);
 }
