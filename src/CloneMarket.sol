@@ -9,6 +9,7 @@ import "./interfaces/ISkills.sol";
 import "./tokens/CRED.sol";
 
 contract CloneMarket is UniversalData {
+    bool internal initialized = false;
     /// @notice emitted when a clone is listed on the market
     event CloneListed(uint256 cloneId, uint256 price);
     /// @notice emitted when a clone is removed from the market
@@ -21,7 +22,13 @@ contract CloneMarket is UniversalData {
         uint256 amount
     );
 
-    constructor(address _gameManager) UniversalData(_gameManager) {}
+    constructor() {}
+
+    function initialize(address _gameManager) public {
+        require(!initialized, "Star Seekers: Already initialized");
+
+        gameManager = GameManager(_gameManager);
+    }
 
     /// @notice Lists a clone on the clone market
     /// @dev only clone owner should be able to call this function for a given clone

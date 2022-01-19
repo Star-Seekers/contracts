@@ -8,6 +8,8 @@ import "./interfaces/ICloningFacility.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract Learning is UniversalData {
+    bool internal initialized = false;
+
     struct LearningState {
         bool is_learning;
         uint256 end_time;
@@ -27,7 +29,14 @@ contract Learning is UniversalData {
     /// @notice emitted any time we update the learning state
     event LearningStateUpdated(uint256 cloneId);
 
-    constructor(address _gameManager) UniversalData(_gameManager) {}
+    constructor() {}
+
+    function initialize(address _gameManager) public {
+        require(!initialized, "Star Seekers: Already initialized");
+
+        gameManager = GameManager(_gameManager);
+        initialized = true;
+    }
 
     /// @notice after training has completed call this function to update state
     /// @dev can only be called when game is not in maintenance, the clone is not for sale,

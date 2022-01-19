@@ -7,8 +7,12 @@ import "./interfaces/IStats.sol";
 import "./interfaces/ICRED.sol";
 import "./interfaces/IChainlinkAggregator.sol";
 
+import "hardhat/console.sol";
+
 /// @notice this contract serves as the central location for clone s
 contract CloningFacility is UniversalData {
+    bool internal initialized = false;
+
     struct CloneData {
         address owner;
         bool for_sale;
@@ -19,14 +23,35 @@ contract CloningFacility is UniversalData {
 
     /// @notice cloneData[cloneId] => CloneData struct
     mapping(uint256 => CloneData) cloneData;
-    /// @notice clonesOwnedByAddress[playerWalletAddress] => array[cloneId]
+    /// @notice clonesOwnedByAddress[playerWalletAddress] => array[cloneId]np
     mapping(address => uint256[]) clonesOwnedByAddress;
     /// @notice stats[cloneId][Stat.stat] => statLevel
     mapping(uint256 => mapping(IStats.Stat => uint256)) stats;
 
     event CloneCreated(uint256 cloneId, address owner);
 
-    constructor(address _gameManager) UniversalData(_gameManager) {}
+    constructor() {}
+
+    function initialize(address _gameManager) public {
+        require(!initialized, "Star Seekers: Already initialized");
+
+        gameManager = GameManager(_gameManager);
+        initialized = true;
+    }
+
+    /// @notice Gets cost of a clone in chain base token
+    /// @return uint256 clone cost in chain base token based on chainlink feed price
+    function cloneCostInBaseToken() public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
+            gameManager.chainlinkFeed()
+        );
+        (, int256 purchaseTokenUsdPrice, , , ) = priceFeed.latestRoundData();
+        uint256 denominator = uint256(purchaseTokenUsdPrice);
+
+        return
+            ((gameManager.cloneCost() * 1000000000000000000000) / denominator) *
+            100000;
+    }
 
     /// @notice Creates a new clone
     /// @dev gets the price of the chains base token from chainlink
@@ -38,20 +63,13 @@ contract CloningFacility is UniversalData {
         );
         ICred cred = ICred(gameManager.contractAddresses("CRED"));
 
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(
-            gameManager.chainlinkFeed()
-        );
-        (, int256 purchaseTokenUsdPrice, , , ) = priceFeed.latestRoundData();
+        uint256 cost = cloneCostInBaseToken();
 
-        uint256 cloneCostInBaseToken = gameManager.cloneCost() /
-            uint256(purchaseTokenUsdPrice);
-        require(
-            msg.value >= cloneCostInBaseToken,
-            "Star Seekers: Invalid payment amount"
-        );
+        uint256 returnAmount = msg.value - cost;
 
-        (bool sent, ) = payable(address(this)).call{value: msg.value}("");
-        require(sent, "Star Seekers: Failed to send payment token");
+        console.log("cost", cost, returnAmount);
+
+        require(msg.value >= cost, "Star Seekers: Invalid payment amount");
 
         uint256 newCloneId = IClone(gameManager.contractAddresses("Clone"))
             .create(msg.sender);
@@ -203,7 +221,19 @@ contract CloningFacility is UniversalData {
     }
 
     receive() external payable {
-        (bool sent, ) = gameManager.federation().call{value: msg.value}("");
-        require(sent, "Star Seekers: Failed to send payment token");
+        uint256 cost = cloneCostInBaseToken();
+        uint256 returnAmount = msg.value - cost;
+
+        console.log("cost", cost, returnAmount);
+
+        (bool sent, ) = payable(gameManager.federation()).call{value: cost}("");
+
+        require(sent, "Star Seekers: Failed to send to federation");
+
+        if (returnAmount > 0) {
+            (sent, ) = msg.sender.call{value: returnAmount}("");
+
+            require(sent, "Star Seekers: ");
+        }
     }
 }

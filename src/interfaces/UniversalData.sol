@@ -10,7 +10,7 @@ contract UniversalData {
 
     modifier notInMaintenance() {
         require(
-            !gameManager.maintenance(),
+            gameManager.maintenance() == false,
             "Star Seekers: Down for Maintenance"
         );
         _;
@@ -55,9 +55,5 @@ contract UniversalData {
             "Star Seekers: Can't complete action while clone is for sale"
         );
         _;
-    }
-
-    constructor(address _gameManager) {
-        gameManager = GameManager(_gameManager);
     }
 }

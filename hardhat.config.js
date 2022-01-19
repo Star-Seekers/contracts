@@ -19,15 +19,9 @@ task("seed", "Seed account with Buidler ETH")
       value: ethers.utils.parseEther("1000.0"),
     });
 
-    console.log(`Star Seekers: Seeded ${taskArgs.account} with 1000 ETH`);
+    console.log(`Star Seekers: Seeded ${taskArgs.account}`);
   });
 
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
-
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
 module.exports = {
   defaultNetwork: "hardhat",
   solidity: {
@@ -49,10 +43,17 @@ module.exports = {
     artifacts: "./artifacts",
   },
   networks: {
+    localhost: {
+      live: false,
+      saveDeployments: true,
+      tags: ["local"],
+    },
     hardhat: {
-      gasPrice: 0,
-      blockGasLimit: 100000000,
-      allowUnlimitedContractSize: true,
+      saveDeployments: true,
+      tags: ["test", "local"],
+      forking: {
+        url: "https://api.avax.network/ext/bc/C/rpc",
+      },
     },
   },
   gasReporter: {
@@ -61,21 +62,24 @@ module.exports = {
     coinmarketcap: process.env.COINMARKETCAP,
     showTimeSpent: "true",
   },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  },
+  // etherscan: {
+  //   apiKey: process.env.ETHERSCAN_API_KEY,
+  // },
   namedAccounts: {
-    playerOne: {
+    admin: {
       default: 0,
     },
-    admin: {
+    federation: {
       default: 1,
     },
-    federation: {
+    playerOne: {
+      default: 2,
+    },
+    playerTwo: {
       default: 3,
     },
-    userOne: {
-      default: 3,
+    avaxChainlink: {
+      default: "0x0a77230d17318075983913bc2145db16c7366156",
     },
   },
 };

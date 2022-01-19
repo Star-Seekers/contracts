@@ -2,8 +2,6 @@
 pragma solidity ^0.8.0;
 
 interface IClone {
-    function create(address owner) external returns (uint256);
-
     /**
      * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
      */
@@ -35,6 +33,8 @@ interface IClone {
      * @dev Returns the number of tokens in ``owner``'s account.
      */
     function balanceOf(address owner) external view returns (uint256 balance);
+
+    function create(address owner) external returns (uint256);
 
     /**
      * @dev Returns the owner of the `tokenId` token.

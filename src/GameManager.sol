@@ -2,13 +2,15 @@
 pragma solidity ^0.8.0;
 
 contract GameManager {
+    bool internal initialized = false;
+
     address public admin;
     address public chainlinkFeed;
     address payable public federation;
-    bool public maintenance = false;
-    uint256 public cloneCost = 100; /// usd price
-    uint256 public salesTax = 5; /// percentage
-    uint256 public startingCred = 10000;
+    bool public maintenance;
+    uint256 public cloneCost; /// usd price
+    uint256 public salesTax; /// percentage
+    uint256 public startingCred;
 
     /// @notice contractAddresses["ContractName"] => contractAddress
     mapping(string => address) public contractAddresses;
@@ -34,16 +36,37 @@ contract GameManager {
     event AddContract(string name, address contractAddress);
     event AdminUpdated(address oldAdmin, address newAdmin);
     event RemoveContract(string name, address contractAddress);
-    event ChainlinkFeedUpdated(address newAddress);
+    event ChainlinkFeedUpdated(address feed);
     event MaintenanceUpdated(bool status);
     event FederationUpdated(address federation);
     event SalesTaxUpdated(uint256 amount);
     event StartingCredUpdated(uint256 amount);
     event ReceivedStartingCred(address player);
 
-    constructor(address _admin) {
+    function initialize(
+        address _admin,
+        address _chainlinkFeed,
+        address payable _federation
+    ) public {
+        require(!initialized, "Star Seekers: Already initialized");
         require(_admin != address(0), "Star Seekers: Admin address required");
+        require(
+            _chainlinkFeed != address(0),
+            "Star Seekers: Chainlink Feed address required"
+        );
+        require(
+            _federation != address(0),
+            "Star Seekers: Federation address required"
+        );
         admin = _admin;
+
+        chainlinkFeed = _chainlinkFeed;
+        cloneCost = 50;
+        federation = _federation;
+        initialized = true;
+        maintenance = false;
+        salesTax = 5;
+        startingCred = 10000;
     }
 
     /// @notice adds a contract as a registered game contract

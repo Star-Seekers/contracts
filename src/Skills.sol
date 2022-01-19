@@ -5,6 +5,8 @@ import "./interfaces/UniversalData.sol";
 import "./interfaces/IStats.sol";
 
 contract Skills is UniversalData {
+    bool internal initialized = false;
+
     uint256 private skillIndex;
     uint256 private skillGroupIndex;
 
@@ -42,7 +44,14 @@ contract Skills is UniversalData {
     /// @notice emitted when a new skill group is added to the database by the admin;
     event SkillGroupAdded(uint256 skillGroupId);
 
-    constructor(address _gameManager) UniversalData(_gameManager) {}
+    constructor() {}
+
+    function initialize(address _gameManager) public {
+        require(!initialized, "Star Seekers: Already initialized");
+
+        gameManager = GameManager(_gameManager);
+        initialized = true;
+    }
 
     /// @notice adds a new skill to the database of trainable skills and adds it to a skill group
     /// @param _skill Skill struct
