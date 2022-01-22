@@ -48,7 +48,7 @@ contract Clone is ERC165, IERC721, IERC721Metadata, UniversalData {
     {
         uint256 cloneId = nextCloneId;
 
-        _mint(_owner, cloneId);
+        _mint(_owner, nextCloneId);
 
         nextCloneId += 1;
 
@@ -134,15 +134,6 @@ contract Clone is ERC165, IERC721, IERC721Metadata, UniversalData {
         return
             ICloningFacility(gameManager.contractAddresses("CloningFacility"))
                 .getCloneUri(_tokenId);
-    }
-
-    /**
-     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
-     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
-     * by default, can be overriden in child contracts.
-     */
-    function _baseURI() internal view virtual returns (string memory) {
-        return "";
     }
 
     /**

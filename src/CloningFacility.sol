@@ -23,10 +23,8 @@ contract CloningFacility is UniversalData {
 
     /// @notice cloneData[cloneId] => CloneData struct
     mapping(uint256 => CloneData) cloneData;
-    /// @notice clonesOwnedByAddress[playerWalletAddress] => array[cloneId]np
-    mapping(address => uint256[]) clonesOwnedByAddress;
     /// @notice stats[cloneId][Stat.stat] => statLevel
-    mapping(uint256 => mapping(IStats.Stat => uint256)) stats;
+    mapping(uint256 => mapping(IStats.Stat => uint256)) public stats;
 
     event CloneCreated(uint256 cloneId, address owner);
 
@@ -61,20 +59,15 @@ contract CloningFacility is UniversalData {
             gameManager.chainlinkFeed() != address(0),
             "Star Seekers: No chainlink feed set"
         );
+
+        _handleReceivePayment(msg.sender);
+
         ICred cred = ICred(gameManager.contractAddresses("CRED"));
-
-        uint256 cost = cloneCostInBaseToken();
-
-        uint256 returnAmount = msg.value - cost;
-
-        console.log("cost", cost, returnAmount);
-
-        require(msg.value >= cost, "Star Seekers: Invalid payment amount");
 
         uint256 newCloneId = IClone(gameManager.contractAddresses("Clone"))
             .create(msg.sender);
 
-        CloneData memory data = CloneData({
+        CloneData memory newClone = CloneData({
             owner: msg.sender,
             for_sale: false,
             uri: _uri, // IPFS json endpoint
@@ -82,8 +75,7 @@ contract CloningFacility is UniversalData {
             id: newCloneId
         });
 
-        cloneData[newCloneId] = data;
-        clonesOwnedByAddress[msg.sender].push(data.id);
+        cloneData[newCloneId] = newClone;
 
         if (
             gameManager.startingCred() > 0 &&
@@ -140,18 +132,7 @@ contract CloningFacility is UniversalData {
         onlyGameContract
         returns (bool)
     {
-        uint256[] memory clones = clonesOwnedByAddress[
-            cloneData[_cloneId].owner
-        ];
-
-        for (uint256 i = 0; i <= clones.length; i += 1) {
-            if (clones[i] == _cloneId) {
-                delete clones[i];
-                clonesOwnedByAddress[cloneData[_cloneId].owner] = clones;
-            }
-        }
         cloneData[_cloneId].owner = _newOwner;
-        clonesOwnedByAddress[_newOwner].push(_cloneId);
 
         return true;
     }
@@ -162,7 +143,7 @@ contract CloningFacility is UniversalData {
     /// @param _forSale bool sale state
     /// @param _price uint256 price of clone
     /// @return bool success
-    function changeSalesState(
+    function changeSalesStatus(
         uint256 _cloneId,
         bool _forSale,
         uint256 _price
@@ -220,20 +201,24 @@ contract CloningFacility is UniversalData {
         return true;
     }
 
-    receive() external payable {
+    function _handleReceivePayment(address _buyer) private returns (bool) {
         uint256 cost = cloneCostInBaseToken();
-        uint256 returnAmount = msg.value - cost;
+        require(msg.value >= cost, "Star Seekers: Invalid payment amount");
 
-        console.log("cost", cost, returnAmount);
+        uint256 returnAmount = msg.value - cost;
 
         (bool sent, ) = payable(gameManager.federation()).call{value: cost}("");
 
         require(sent, "Star Seekers: Failed to send to federation");
 
         if (returnAmount > 0) {
-            (sent, ) = msg.sender.call{value: returnAmount}("");
+            (sent, ) = _buyer.call{value: returnAmount}("");
 
-            require(sent, "Star Seekers: ");
+            require(sent, "Star Seekers: Failed to return difference to buyer");
         }
+
+        return true;
     }
+
+    receive() external payable {}
 }

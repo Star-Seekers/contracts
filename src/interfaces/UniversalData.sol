@@ -5,37 +5,40 @@ import "../GameManager.sol";
 import "../interfaces/ICloningFacility.sol";
 import "../interfaces/ILearning.sol";
 
+import "hardhat/console.sol";
+
 contract UniversalData {
     GameManager internal gameManager;
 
-    modifier notInMaintenance() {
+    modifier notInMaintenance() virtual {
         require(
             gameManager.maintenance() == false,
             "Star Seekers: Down for Maintenance"
         );
         _;
     }
-    modifier onlyGameManager() {
+    modifier onlyGameManager() virtual {
         require(
             address(gameManager) == msg.sender,
             "Star Seekers: Only game manager"
         );
         _;
     }
-    modifier onlyGameContract() {
+    modifier onlyGameContract() virtual {
         require(
             gameManager.isGameContract(msg.sender),
             "Star Seekers: Not a game contract"
         );
         _;
     }
-    modifier onlyAdmin() {
+    modifier onlyAdmin() virtual {
         require(msg.sender == gameManager.admin(), "Star Seekers: Admin only");
         _;
     }
-    modifier onlyCloneOwner(address _owner, uint256 _cloneId) {
+
+    modifier onlyCloneOwner(address _owner, uint256 _cloneId) virtual {
         ICloningFacility cloningFacility = ICloningFacility(
-            gameManager.contractAddresses("CloningFacility")
+            payable(gameManager.contractAddresses("CloningFacility"))
         );
         ICloningFacility.CloneData memory cloneData = cloningFacility
             .getCloneData(_cloneId);
@@ -43,7 +46,8 @@ contract UniversalData {
         require(cloneData.owner == _owner, "Star Seekers: Clone owner only");
         _;
     }
-    modifier notForSale(uint256 _cloneId) {
+
+    modifier notForSale(uint256 _cloneId) virtual {
         ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("CloningFacility")
         );

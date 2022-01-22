@@ -1,26 +1,29 @@
-// const { assert } = require("chai");
 const { assert } = require("chai");
 const { deployments, ethers } = require("hardhat");
 
+let cloningFacility;
+let cred;
+let clone;
+let admin;
+let federation;
+
+beforeEach(async () => {
+  await deployments.fixture();
+  [admin, federation] = await ethers.getSigners();
+
+  cloningFacility = await ethers.getContract("CloningFacility", admin);
+  cred = await ethers.getContract("Cred", admin);
+  clone = await ethers.getContract("Clone", admin);
+});
+
 describe("Cloning Facility", async () => {
-  let clongingFacility;
-  let cred;
-  let clone;
-  // let gameManager;
-  const [admin] = await ethers.getSigners();
-
-  beforeEach(async () => {
-    await deployments.fixture();
-
-    clongingFacility = await ethers.getContract("CloningFacility", admin);
-    // gameManager = await ethers.getContract("GameManager", admin);
-    cred = await ethers.getContract("Cred", admin);
-    clone = await ethers.getContract("Clone", admin);
-  });
-
   it("should create a new clone", async () => {
-    const tx = await clongingFacility.create("https://test.url", {
-      value: ethers.utils.parseEther("0.7"),
+    const federationBalanceBefore = await ethers.provider.getBalance(
+      federation.address
+    );
+
+    const tx = await cloningFacility.create("https://test.url", {
+      value: await cloningFacility.cloneCostInBaseToken(),
     });
     const data = await tx.wait();
 
@@ -35,7 +38,31 @@ describe("Cloning Facility", async () => {
       }
     }
 
-    console.log("cred contract", await cred.name());
-    console.log("clone contract", await clone.name());
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    const cloneBalance = await clone.balanceOf(admin.address);
+    const credBalance = await cred.balanceOf(admin.address);
+    const cloneData = await cloningFacility.getCloneData(1);
+    const cloneUri = await cloningFacility.getCloneUri(1);
+    const federationBalanceAfter = await ethers.provider.getBalance(
+      federation.address
+    );
+    const cloneCostInBaseToken = await cloningFacility.cloneCostInBaseToken();
+
+    assert.equal(
+      ethers.utils.formatEther(
+        federationBalanceBefore.add(cloneCostInBaseToken.mul(2))
+      ),
+      ethers.utils.formatEther(federationBalanceAfter)
+    );
+    assert.equal(cloneUri, "https://test.url");
+    assert.equal(cloneData.for_sale, false);
+    assert.equal(cloneData.uri, "https://test.url");
+    assert.equal(ethers.utils.formatEther(credBalance), "10000.0");
+    assert.equal(cloneBalance.toNumber(), 2);
   });
 });

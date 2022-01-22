@@ -1,18 +1,18 @@
-// const { assert } = require("chai");
 const { expect, assert } = require("chai");
 const { deployments, ethers, getNamedAccounts } = require("hardhat");
 
+let gameManager;
+let admin;
+let federation;
+
+beforeEach(async () => {
+  await deployments.fixture();
+  [admin, federation] = await ethers.getSigners();
+
+  gameManager = await ethers.getContract("GameManager", admin);
+});
+
 describe("GameManager", async () => {
-  let gameManager;
-  const [admin, federation] = await ethers.getSigners();
-
-  beforeEach(async () => {
-    await deployments.fixture();
-
-    // const GameManager = await deployments.get("GameManager");
-    gameManager = await ethers.getContract("GameManager", admin);
-  });
-
   it("should add a new contract to the list of approved contracts", async () => {
     const Learning = await deployments.get("Learning");
 
@@ -171,22 +171,27 @@ describe("GameManager", async () => {
 
   it("should set starting credits amount", async () => {
     let startingCred = await gameManager.startingCred();
-    assert.equal(startingCred.toNumber(), 10000);
+    assert.equal(ethers.utils.formatEther(startingCred), "10000.0");
 
-    const tx = await gameManager.setStartingCred(100000);
+    const tx = await gameManager.setStartingCred(
+      ethers.utils.parseEther("100000")
+    );
     const data = await tx.wait();
 
     assert.equal(data.events[0].event, "StartingCredUpdated");
-    assert.equal(data.events[0].args.amount, 100000);
+    assert.equal(
+      ethers.utils.formatEther(data.events[0].args.amount),
+      "100000.0"
+    );
     startingCred = await gameManager.startingCred();
-    assert.equal(startingCred.toNumber(), 100000);
+    assert.equal(ethers.utils.formatEther(startingCred), "100000.0");
   });
 
   it("should not set starting cred if called by non admin", async () => {
     gameManager = await ethers.getContract("GameManager", federation);
 
-    await expect(gameManager.setStartingCred(10)).to.be.revertedWith(
-      "Star Seekers: Admin only"
-    );
+    await expect(
+      gameManager.setStartingCred(ethers.utils.parseEther("10"))
+    ).to.be.revertedWith("Star Seekers: Admin only");
   });
 });

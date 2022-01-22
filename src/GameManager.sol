@@ -66,7 +66,7 @@ contract GameManager {
         initialized = true;
         maintenance = false;
         salesTax = 5;
-        startingCred = 10000;
+        startingCred = 10000 ether;
     }
 
     /// @notice adds a contract as a registered game contract

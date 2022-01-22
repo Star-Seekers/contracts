@@ -6,7 +6,9 @@ import "./interfaces/IClone.sol";
 import "./interfaces/ICloningFacility.sol";
 import "./interfaces/ILearning.sol";
 import "./interfaces/ISkills.sol";
-import "./tokens/CRED.sol";
+import "./interfaces/ICRED.sol";
+
+import "hardhat/console.sol";
 
 contract CloneMarket is UniversalData {
     bool internal initialized = false;
@@ -34,7 +36,6 @@ contract CloneMarket is UniversalData {
     /// @dev only clone owner should be able to call this function for a given clone
     /// @param _cloneId the id of the clone to list for sale
     /// @param _price the price to list the clone for in CRED
-
     function list(uint256 _cloneId, uint256 _price)
         public
         onlyCloneOwner(msg.sender, _cloneId)
@@ -63,6 +64,9 @@ contract CloneMarket is UniversalData {
         ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("CloningFacility")
         );
+        ICloningFacility.CloneData memory cloneData = cloningFacility
+            .getCloneData(_cloneId);
+        require(cloneData.for_sale, "Star Seekers: Not for sale");
 
         cloningFacility.changeSalesStatus(_cloneId, false, 0);
 
@@ -77,13 +81,15 @@ contract CloneMarket is UniversalData {
         );
         ICloningFacility.CloneData memory cloneData = cloningFacility
             .getCloneData(_cloneId);
-        require(cloneData.for_sale == true, "Star Seeker: clone not for sale");
-
-        Cred cred = Cred(gameManager.contractAddresses("CRED"));
-
+        require(cloneData.for_sale == true, "Star Seekers: Clone not for sale");
+        ICred cred = ICred(gameManager.contractAddresses("CRED"));
         require(
             cred.balanceOf(msg.sender) >= cloneData.price,
             "Star Seekers: Not enough CRED"
+        );
+        require(
+            msg.sender != cloneData.owner,
+            "Star Seekers: Can not purchase own clone"
         );
         require(
             cred.allowance(msg.sender, address(this)) >= cloneData.price,
@@ -111,6 +117,8 @@ contract CloneMarket is UniversalData {
 
         cred.transfer(gameManager.federation(), federationCut);
         cred.transfer(cloneData.owner, sellerCut);
+
+        cloningFacility.changeSalesStatus(_cloneId, false, 0);
 
         IClone cloneInstance = IClone(gameManager.contractAddresses("Clone"));
         cloneInstance.safeTransferFrom(cloneData.owner, msg.sender, _cloneId);
