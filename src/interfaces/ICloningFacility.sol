@@ -33,6 +33,11 @@ interface ICloningFacility {
         view
         returns (CloneData memory);
 
+    function getClonesOwnedByAddress(address owner)
+        external
+        view
+        returns (uint256[] memory);
+
     function getCloneStatLevel(uint256 cloneId, IStats.Stat stat)
         external
         view

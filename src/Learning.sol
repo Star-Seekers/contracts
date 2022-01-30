@@ -6,6 +6,8 @@ import "./interfaces/ISkills.sol";
 import "./interfaces/IStats.sol";
 import "./interfaces/ICloningFacility.sol";
 
+import "hardhat/console.sol";
+
 /// @notice this contract serves as the central location for clone s
 contract Learning is UniversalData {
     bool internal initialized = false;
@@ -15,6 +17,7 @@ contract Learning is UniversalData {
         uint256 end_time;
         uint256 learning;
         uint256 start_time;
+        uint256 totalLearningPoints;
     }
     /// @notice learningState[_cloneId] => LearningState
     mapping(uint256 => LearningState) learningState;
@@ -27,7 +30,7 @@ contract Learning is UniversalData {
     mapping(uint256 => mapping(uint256 => LearningLog)) learningLog;
 
     /// @notice emitted any time we update the learning state
-    event LearningStateUpdated(uint256 cloneId);
+    event LearningStateUpdated(uint256 cloneId, LearningState learningState);
 
     constructor() {}
 
@@ -59,7 +62,7 @@ contract Learning is UniversalData {
 
         _resetAndUpdateLearningState(_cloneId);
 
-        emit LearningStateUpdated(_cloneId);
+        emit LearningStateUpdated(_cloneId, learningState[_cloneId]);
     }
 
     /// @notice start training on a specific clone
@@ -93,7 +96,7 @@ contract Learning is UniversalData {
         learningState[_cloneId].is_learning = true;
         learningState[_cloneId].learning = _skillId;
 
-        emit LearningStateUpdated(_cloneId);
+        emit LearningStateUpdated(_cloneId, learningState[_cloneId]);
     }
 
     /// @notice stop training on a skill that's still in training
@@ -117,7 +120,7 @@ contract Learning is UniversalData {
 
         _resetAndUpdateLearningState(_cloneId);
 
-        emit LearningStateUpdated(_cloneId);
+        emit LearningStateUpdated(_cloneId, learningState[_cloneId]);
     }
 
     /// @notice retrieve a clones learning log for a specific skill
@@ -215,7 +218,14 @@ contract Learning is UniversalData {
             secondaryAttributeLevel
         );
 
-        return (learningPointsRequired / learningPointsPerMinute) * 1 minutes;
+        /// @dev rounds the result UP and converts it to minutes
+        return
+            ((learningPointsRequired / learningPointsPerMinute) +
+                (
+                    learningPointsRequired % learningPointsPerMinute == 0
+                        ? 0
+                        : 1
+                )) * 1 minutes;
     }
 
     /// @notice calculates required learning points based on player stats
@@ -231,11 +241,12 @@ contract Learning is UniversalData {
         uint256 _secondaryPlayerStatAttribute // player attribute level
     ) internal view returns (uint256) {
         return
-            (_calculateBaseLearningPoints(
+            ((_calculateBaseLearningPoints(
                 _skill.multiplier,
                 learningLog[_cloneId][_skill.id].skill_level + 1
             ) - learningLog[_cloneId][_skill.id].learning_points) /
-            (_primaryPlayerStatAttribute + (_secondaryPlayerStatAttribute / 2));
+                (_primaryPlayerStatAttribute +
+                    (_secondaryPlayerStatAttribute / 2))) * (10**3);
     }
 
     /// @notice calculates base learning points based on skill multiplier and the skill
@@ -260,10 +271,8 @@ contract Learning is UniversalData {
         uint256 _secondaryPlayerStatAttribute // player stat attribute
     ) internal pure returns (uint256) {
         return
-            (_primaryPlayerStatAttribute * 1) /
-            2 +
-            (_secondaryPlayerStatAttribute * 1) /
-            4;
+            ((((_primaryPlayerStatAttribute * 1) * (10**3)) / 4)) +
+            ((((_secondaryPlayerStatAttribute * 1) * (10**3)) / 8));
     }
 
     /// @notice checks if a skill meets the requirements to be learned
@@ -316,6 +325,9 @@ contract Learning is UniversalData {
         learningState[_cloneId].end_time = 0;
         learningState[_cloneId].is_learning = false;
         learningState[_cloneId].learning = 0;
+        learningState[_cloneId].totalLearningPoints += learningLog[_cloneId][
+            learningState[_cloneId].learning
+        ].learning_points;
 
         return true;
     }

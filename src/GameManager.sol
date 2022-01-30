@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract GameManager {
-    bool internal initialized = false;
+    bool internal initialized;
 
     address public admin;
     address public chainlinkFeed;

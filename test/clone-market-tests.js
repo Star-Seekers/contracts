@@ -28,14 +28,14 @@ describe("Clone Market", async () => {
 
     await clone.setApprovalForAll(cloneMarket.address, true);
 
-    const tx = await cloneMarket.list(0, ethers.utils.parseEther("1000"));
+    const tx = await cloneMarket.list(1, ethers.utils.parseEther("1000"));
     const data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListed");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId, 1);
     assert.equal(ethers.utils.formatEther(data.events[0].args.price), "1000.0");
 
-    const cloneData = await cloningFacility.getCloneData(0);
+    const cloneData = await cloningFacility.getCloneData(1);
     assert.equal(cloneData.for_sale, true);
     assert.equal(ethers.utils.formatEther(cloneData.price), "1000.0");
   });
@@ -48,7 +48,7 @@ describe("Clone Market", async () => {
     });
 
     await expect(
-      cloneMarket.list(0, ethers.utils.parseEther("1000"))
+      cloneMarket.list(1, ethers.utils.parseEther("1000"))
     ).to.be.revertedWith("Star Seekers: Market not approved");
   });
 
@@ -64,7 +64,7 @@ describe("Clone Market", async () => {
     await clone.setApprovalForAll(cloneMarket.address, true);
 
     await expect(
-      cloneMarket.list(0, ethers.utils.parseEther("1000"))
+      cloneMarket.list(1, ethers.utils.parseEther("1000"))
     ).to.be.revertedWith("Star Seekers: Clone owner only");
   });
 
@@ -77,20 +77,20 @@ describe("Clone Market", async () => {
 
     await clone.setApprovalForAll(cloneMarket.address, true);
 
-    let tx = await cloneMarket.list(0, ethers.utils.parseEther("1000"));
+    let tx = await cloneMarket.list(1, ethers.utils.parseEther("1000"));
     let data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListed");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId, 1);
     assert.equal(ethers.utils.formatEther(data.events[0].args.price), "1000.0");
 
-    tx = await cloneMarket.cancel(0);
+    tx = await cloneMarket.cancel(1);
     data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListingCancelled");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId, 1);
 
-    const cloneData = await cloningFacility.getCloneData(0);
+    const cloneData = await cloningFacility.getCloneData(1);
 
     assert.equal(cloneData.for_sale, false);
     assert.equal(ethers.utils.formatEther(cloneData.price), "0.0");
@@ -105,16 +105,16 @@ describe("Clone Market", async () => {
 
     await clone.setApprovalForAll(cloneMarket.address, true);
 
-    const tx = await cloneMarket.list(0, ethers.utils.parseEther("1000"));
+    const tx = await cloneMarket.list(1, ethers.utils.parseEther("1000"));
     const data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListed");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId, 1);
     assert.equal(ethers.utils.formatEther(data.events[0].args.price), "1000.0");
 
     cloneMarket = await ethers.getContract("CloneMarket", federation);
 
-    await expect(cloneMarket.buy(0)).to.be.revertedWith(
+    await expect(cloneMarket.buy(1)).to.be.revertedWith(
       "Star Seekers: Not enough CRED"
     );
   });
@@ -127,14 +127,14 @@ describe("Clone Market", async () => {
 
     await clone.setApprovalForAll(cloneMarket.address, true);
 
-    const tx = await cloneMarket.list(0, ethers.utils.parseEther("1000"));
+    const tx = await cloneMarket.list(1, ethers.utils.parseEther("1000"));
     const data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListed");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId, 1);
     assert.equal(ethers.utils.formatEther(data.events[0].args.price), "1000.0");
 
-    await expect(cloneMarket.buy(0)).to.be.revertedWith(
+    await expect(cloneMarket.buy(1)).to.be.revertedWith(
       "Star Seekers: Can not purchase own clone"
     );
   });
@@ -146,11 +146,11 @@ describe("Clone Market", async () => {
     });
     await clone.setApprovalForAll(cloneMarket.address, true);
 
-    const tx = await cloneMarket.list(0, ethers.utils.parseEther("1000"));
+    const tx = await cloneMarket.list(1, ethers.utils.parseEther("1000"));
     const data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListed");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId, 1);
     assert.equal(ethers.utils.formatEther(data.events[0].args.price), "1000.0");
 
     cloneMarket = await ethers.getContract("CloneMarket", federation);
@@ -162,7 +162,7 @@ describe("Clone Market", async () => {
       ),
     });
 
-    await expect(cloneMarket.buy(0)).to.be.revertedWith(
+    await expect(cloneMarket.buy(1)).to.be.revertedWith(
       "Star Seekers: Improper allowance"
     );
   });
@@ -183,12 +183,12 @@ describe("Clone Market", async () => {
       ),
     });
 
-    await expect(cloneMarket.buy(0)).to.be.revertedWith(
+    await expect(cloneMarket.buy(1)).to.be.revertedWith(
       "Star Seekers: Clone not for sale"
     );
   });
 
-  it("should should purchase a clone", async () => {
+  it("should purchase a clone", async () => {
     await cloningFacility.create("https://test.url", {
       value: ethers.utils.parseEther(
         ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
@@ -196,11 +196,11 @@ describe("Clone Market", async () => {
     });
     await clone.setApprovalForAll(cloneMarket.address, true);
 
-    let tx = await cloneMarket.list(0, ethers.utils.parseEther("1000"));
+    let tx = await cloneMarket.list(1, ethers.utils.parseEther("1000"));
     let data = await tx.wait();
 
     assert.equal(data.events[0].event, "CloneListed");
-    assert.equal(data.events[0].args.cloneId, 0);
+    assert.equal(data.events[0].args.cloneId.toNumber(), "1");
     assert.equal(ethers.utils.formatEther(data.events[0].args.price), "1000.0");
 
     cloneMarket = await ethers.getContract("CloneMarket", playerOne);
@@ -215,10 +215,10 @@ describe("Clone Market", async () => {
     cred = await ethers.getContract("Cred", playerOne);
     await cred.approve(cloneMarket.address, ethers.utils.parseEther("10000"));
 
-    tx = await cloneMarket.buy(0);
+    tx = await cloneMarket.buy(1);
     data = await tx.wait();
 
-    const cloneData = await cloningFacility.getCloneData(0);
+    const cloneData = await cloningFacility.getCloneData(1);
     const adminBalance = await clone.balanceOf(admin.address);
     const playerBalance = await clone.balanceOf(playerOne.address);
     assert.equal(
@@ -233,5 +233,14 @@ describe("Clone Market", async () => {
     assert.equal(playerBalance.toNumber(), "2.0");
     assert.equal(cloneData.owner, playerOne.address);
     assert.equal(await clone.ownerOf(cloneData.id), playerOne.address);
+
+    const adminClones = await cloningFacility.getClonesOwnedByAddress(
+      admin.address
+    );
+    const playerOneClones = await cloningFacility.getClonesOwnedByAddress(
+      playerOne.address
+    );
+    assert.equal(adminClones.length, 0);
+    assert.equal(playerOneClones.length, 2);
   });
 });

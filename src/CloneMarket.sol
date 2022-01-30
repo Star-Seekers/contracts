@@ -8,10 +8,8 @@ import "./interfaces/ILearning.sol";
 import "./interfaces/ISkills.sol";
 import "./interfaces/ICRED.sol";
 
-import "hardhat/console.sol";
-
 contract CloneMarket is UniversalData {
-    bool internal initialized = false;
+    bool internal initialized;
     /// @notice emitted when a clone is listed on the market
     event CloneListed(uint256 cloneId, uint256 price);
     /// @notice emitted when a clone is removed from the market

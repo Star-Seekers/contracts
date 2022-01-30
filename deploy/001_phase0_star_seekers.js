@@ -1,5 +1,6 @@
 // const { ethers } = require("ethers");
 // const hre = require("hardhat").ethers;
+const skillsJson = require("../json/skills.json");
 
 module.exports = async ({
   getNamedAccounts,
@@ -36,7 +37,7 @@ module.exports = async ({
     log("##########################################################");
   }
 
-  const skills = await deploy("Skills", {
+  const Skills = await deploy("Skills", {
     from: federation,
     args: [],
     proxy: {
@@ -47,11 +48,35 @@ module.exports = async ({
       },
     },
   });
+  const skills = await ethers.getContract("Skills", adminSigner);
 
-  if (skills.newlyDeployed) {
-    log(`# Skills Proxy: ${skills.address} `);
-    log(`# Skills Implementation: ${skills.implementation} `);
-    await gameManager.addContract("Skills", skills.address);
+  if (Skills.newlyDeployed) {
+    log(`# Skills Proxy: ${Skills.address} `);
+    log(`# Skills Implementation: ${Skills.implementation} `);
+    await gameManager.addContract("Skills", Skills.address);
+    log("##########################################################");
+
+    log("# Adding Skills");
+    for (let i = 0; i < skillsJson.skills.security.length; i++) {
+      await skills.addSkill(skillsJson.skills.security[i]);
+      log(`# Skill: ${skillsJson.skills.security[i].name} Added`);
+    }
+    for (let i = 0; i < skillsJson.skills.mining.length; i++) {
+      await skills.addSkill(skillsJson.skills.mining[i]);
+      log(`# Skill: ${skillsJson.skills.mining[i].name} Added`);
+    }
+    for (let i = 0; i < skillsJson.skills.manufacturing.length; i++) {
+      await skills.addSkill(skillsJson.skills.manufacturing[i]);
+      log(`# Skill: ${skillsJson.skills.manufacturing[i].name} Added`);
+    }
+    for (let i = 0; i < skillsJson.skills.trading.length; i++) {
+      await skills.addSkill(skillsJson.skills.trading[i]);
+      log(`# Skill: ${skillsJson.skills.trading[i].name} Added`);
+    }
+    for (let i = 0; i < skillsJson.skills.fleet.length; i++) {
+      await skills.addSkill(skillsJson.skills.fleet[i]);
+      log(`# Skill: ${skillsJson.skills.fleet[i].name} Added`);
+    }
     log("##########################################################");
   }
 

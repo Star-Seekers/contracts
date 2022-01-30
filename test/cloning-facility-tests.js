@@ -33,7 +33,7 @@ describe("Cloning Facility", async () => {
     for (let i = 0; i < data.events.length; i++) {
       if (typeof data.events[i].event !== "undefined") {
         assert.equal(data.events[i].event, "CloneCreated");
-        assert.equal(data.events[i].args.cloneId, 0);
+        assert.equal(data.events[i].args.cloneId.toNumber(), "1");
         assert.equal(data.events[i].args.owner, admin.address);
       }
     }

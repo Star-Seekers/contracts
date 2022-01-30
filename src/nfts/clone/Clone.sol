@@ -14,8 +14,8 @@ contract Clone is ERC165, IERC721, IERC721Metadata, UniversalData {
     using Address for address;
     using Strings for uint256;
 
-    bool internal initialized = false;
-    uint256 internal nextCloneId = 0;
+    bool internal initialized;
+    uint256 internal nextCloneId;
 
     // Token name
     string private _name;
@@ -39,6 +39,7 @@ contract Clone is ERC165, IERC721, IERC721Metadata, UniversalData {
         _symbol = "SSCLONE";
         gameManager = GameManager(_gameManager);
         initialized = true;
+        nextCloneId = 1;
     }
 
     function create(address _owner)

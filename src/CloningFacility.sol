@@ -11,7 +11,7 @@ import "hardhat/console.sol";
 
 /// @notice this contract serves as the central location for clone s
 contract CloningFacility is UniversalData {
-    bool internal initialized = false;
+    bool internal initialized;
 
     struct CloneData {
         address owner;
@@ -23,6 +23,8 @@ contract CloningFacility is UniversalData {
 
     /// @notice cloneData[cloneId] => CloneData struct
     mapping(uint256 => CloneData) cloneData;
+    /// @notice clonesOwnedByAddress[playerWalletAddress] => array[cloneId]
+    mapping(address => uint256[]) clonesOwnedByAddress;
     /// @notice stats[cloneId][Stat.stat] => statLevel
     mapping(uint256 => mapping(IStats.Stat => uint256)) public stats;
 
@@ -75,7 +77,14 @@ contract CloningFacility is UniversalData {
             id: newCloneId
         });
 
+        stats[newClone.id][IStats.Stat.charisma] = 5;
+        stats[newClone.id][IStats.Stat.ingenuity] = 5;
+        stats[newClone.id][IStats.Stat.intelligence] = 5;
+        stats[newClone.id][IStats.Stat.spirit] = 5;
+        stats[newClone.id][IStats.Stat.toughness] = 5;
+
         cloneData[newCloneId] = newClone;
+        clonesOwnedByAddress[msg.sender].push(newClone.id);
 
         if (
             gameManager.startingCred() > 0 &&
@@ -98,6 +107,17 @@ contract CloningFacility is UniversalData {
         returns (CloneData memory)
     {
         return cloneData[_cloneId];
+    }
+
+    /// @notice get clones owned by an address
+    /// @param _owner uint256 owner address
+    /// @return array of clone ids
+    function getClonesOwnedByAddress(address _owner)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return clonesOwnedByAddress[_owner];
     }
 
     /// @notice gets the level for a specific stat on a specific clone
@@ -132,7 +152,24 @@ contract CloningFacility is UniversalData {
         onlyGameContract
         returns (bool)
     {
+        for (
+            uint256 i = 0;
+            i < clonesOwnedByAddress[cloneData[_cloneId].owner].length;
+            i++
+        ) {
+            if (
+                clonesOwnedByAddress[cloneData[_cloneId].owner][i] == _cloneId
+            ) {
+                clonesOwnedByAddress[cloneData[_cloneId].owner][
+                    i
+                ] = clonesOwnedByAddress[cloneData[_cloneId].owner][
+                    clonesOwnedByAddress[cloneData[_cloneId].owner].length - 1
+                ];
+                clonesOwnedByAddress[cloneData[_cloneId].owner].pop();
+            }
+        }
         cloneData[_cloneId].owner = _newOwner;
+        clonesOwnedByAddress[_newOwner].push(_cloneId);
 
         return true;
     }
