@@ -280,14 +280,14 @@
         "multiplier": 5
       },
       {
-        "dependency": false,
+        "dependency": true,
         "primary_attribute": 0,
         "secondary_attribute": 3,
         "icon": "",
         "name": "Capital Ships",
-        "dependency_id": 0,
+        "dependency_id": 23,
         "id": 28,
-        "multiplier": 1
+        "multiplier": 15
       }
     ]
   }

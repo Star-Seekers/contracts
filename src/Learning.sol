@@ -17,7 +17,7 @@ contract Learning is UniversalData {
         uint256 end_time;
         uint256 learning;
         uint256 start_time;
-        uint256 totalLearningPoints;
+        uint256 total_learning_points;
     }
     /// @notice learningState[_cloneId] => LearningState
     mapping(uint256 => LearningState) learningState;
@@ -160,9 +160,9 @@ contract Learning is UniversalData {
         uint256 trainingTime;
 
         if (currentTime > endTime) {
-            trainingTime = (endTime - startTime) % 60;
+            trainingTime = (endTime - startTime) / 1 minutes;
         } else {
-            trainingTime = (currentTime - startTime) % 60;
+            trainingTime = (currentTime - startTime) / 1 minutes;
         }
 
         ICloningFacility cloningFacility = ICloningFacility(
@@ -180,7 +180,7 @@ contract Learning is UniversalData {
             )
         );
 
-        return trainingTime * learningPointsPerMinute;
+        return (trainingTime * learningPointsPerMinute);
     }
 
     /// @notice calculate the amount of learning time remaining based on the clones stats
@@ -208,9 +208,7 @@ contract Learning is UniversalData {
         /// @dev calculate how many learning points are required to reach next level
         uint256 learningPointsRequired = _calculateLearningPointsRequired(
             _skill,
-            _cloneId,
-            primaryAttributeLevel,
-            secondaryAttributeLevel
+            _cloneId
         );
 
         uint256 learningPointsPerMinute = _calculateLearningPointsPerMinute(
@@ -218,7 +216,6 @@ contract Learning is UniversalData {
             secondaryAttributeLevel
         );
 
-        /// @dev rounds the result UP and converts it to minutes
         return
             ((learningPointsRequired / learningPointsPerMinute) +
                 (
@@ -231,22 +228,35 @@ contract Learning is UniversalData {
     /// @notice calculates required learning points based on player stats
     /// @param _skill skill struct
     /// @param _cloneId cloneId
-    /// @param _primaryPlayerStatAttribute primary player stat level
-    /// @param _secondaryPlayerStatAttribute secondary player stat level
     /// @return uint256 learning points required to level a skill up
     function _calculateLearningPointsRequired(
         ISkills.Skill memory _skill,
-        uint256 _cloneId,
-        uint256 _primaryPlayerStatAttribute, // player attribute level
-        uint256 _secondaryPlayerStatAttribute // player attribute level
+        uint256 _cloneId
     ) internal view returns (uint256) {
+        ICloningFacility cloningFacility = ICloningFacility(
+            gameManager.contractAddresses("CloningFacility")
+        );
+
+        uint256 primaryAttributeLevel = cloningFacility.getCloneStatLevel(
+            _cloneId,
+            _skill.primary_attribute
+        );
+
+        uint256 secondaryAttributeLevel = cloningFacility.getCloneStatLevel(
+            _cloneId,
+            _skill.secondary_attribute
+        );
+        uint256 baseLearningPoints = _calculateBaseLearningPoints(
+            _skill.multiplier,
+            learningLog[_cloneId][_skill.id].skill_level + 1
+        );
+        uint256 currentLearningPoints = learningLog[_cloneId][_skill.id]
+            .learning_points;
+
         return
-            ((_calculateBaseLearningPoints(
-                _skill.multiplier,
-                learningLog[_cloneId][_skill.id].skill_level + 1
-            ) - learningLog[_cloneId][_skill.id].learning_points) /
-                (_primaryPlayerStatAttribute +
-                    (_secondaryPlayerStatAttribute / 2))) * (10**3);
+            (((baseLearningPoints) /
+                (primaryAttributeLevel + (secondaryAttributeLevel / 2))) *
+                10**3) - currentLearningPoints;
     }
 
     /// @notice calculates base learning points based on skill multiplier and the skill
@@ -259,7 +269,7 @@ contract Learning is UniversalData {
         uint256 _multiplier,
         uint256 _skillLevel // player skill level
     ) internal pure returns (uint256) {
-        return (250 * _multiplier) * 6**(_skillLevel - 1);
+        return ((250 * _multiplier) * 6**(_skillLevel - 1));
     }
 
     /// @notice calculates how many learning points a player earns based on their stats per minute
@@ -309,25 +319,36 @@ contract Learning is UniversalData {
         returns (bool)
     {
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
+        uint256 learning = learningState[_cloneId].learning;
+
         ISkills skillsInstance = ISkills(
             gameManager.contractAddresses("Skills")
         );
         /// @dev loads skill definitions
-        ISkills.Skill memory skill = skillsInstance.getSkillById(
-            learningState[_cloneId].learning
-        );
+        ISkills.Skill memory skill = skillsInstance.getSkillById(learning);
 
-        learningLog[_cloneId][learningState[_cloneId].learning]
-            .learning_points = _calculateLearningPointsEarned(skill, _cloneId);
+        if (block.timestamp > learningState[_cloneId].end_time) {
+            learningLog[_cloneId][learning].skill_level += 1;
+            learningLog[_cloneId][learning].learning_points = 0;
+        } else {
+            learningLog[_cloneId][learning]
+                .learning_points = _calculateLearningPointsEarned(
+                skill,
+                _cloneId
+            );
+        }
+
+        learningState[_cloneId]
+            .total_learning_points += _calculateLearningPointsEarned(
+            skill,
+            _cloneId
+        );
 
         /// @dev reset learning state
         learningState[_cloneId].start_time = 0;
         learningState[_cloneId].end_time = 0;
         learningState[_cloneId].is_learning = false;
         learningState[_cloneId].learning = 0;
-        learningState[_cloneId].totalLearningPoints += learningLog[_cloneId][
-            learningState[_cloneId].learning
-        ].learning_points;
 
         return true;
     }
