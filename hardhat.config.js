@@ -81,5 +81,8 @@ module.exports = {
     avaxChainlink: {
       default: "0x0a77230d17318075983913bc2145db16c7366156",
     },
+    fakeContractForTests: {
+      default: 4,
+    },
   },
 };

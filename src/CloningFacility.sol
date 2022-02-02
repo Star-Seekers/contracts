@@ -251,7 +251,6 @@ contract CloningFacility is UniversalData {
 
         if (returnAmount > 0) {
             (sent, ) = _buyer.call{value: returnAmount}("");
-            console.log("return amount", returnAmount);
         }
 
         return true;

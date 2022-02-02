@@ -5,8 +5,6 @@ import "../GameManager.sol";
 import "../interfaces/ICloningFacility.sol";
 import "../interfaces/ILearning.sol";
 
-import "hardhat/console.sol";
-
 contract UniversalData {
     GameManager internal gameManager;
 
@@ -14,13 +12,6 @@ contract UniversalData {
         require(
             gameManager.maintenance() == false,
             "Star Seekers: Down for Maintenance"
-        );
-        _;
-    }
-    modifier onlyGameManager() virtual {
-        require(
-            address(gameManager) == msg.sender,
-            "Star Seekers: Only game manager"
         );
         _;
     }

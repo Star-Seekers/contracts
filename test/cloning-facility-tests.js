@@ -1,4 +1,4 @@
-const { assert } = require("chai");
+const { assert, expect } = require("chai");
 const { deployments, ethers } = require("hardhat");
 
 let cloningFacility;
@@ -6,14 +6,17 @@ let cred;
 let clone;
 let admin;
 let federation;
+let fakeContractForTests;
+let gameManager;
 
 beforeEach(async () => {
   await deployments.fixture();
-  [admin, federation] = await ethers.getSigners();
+  [admin, federation, fakeContractForTests] = await ethers.getSigners();
 
   cloningFacility = await ethers.getContract("CloningFacility", admin);
   cred = await ethers.getContract("Cred", admin);
   clone = await ethers.getContract("Clone", admin);
+  gameManager = await ethers.getContract("GameManager", admin);
 });
 
 describe("Cloning Facility", async () => {
@@ -107,5 +110,50 @@ describe("Cloning Facility", async () => {
     assert.equal(cloneData.uri, "https://test.url");
     assert.equal(ethers.utils.formatEther(credBalance), "10000.0");
     assert.equal(cloneBalance.toNumber(), 1);
+  });
+
+  it("should change the clone uri", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: await cloningFacility.cloneCostInBaseToken(),
+    });
+    expect(await cloningFacility.getCloneUri(1)).to.equal("https://test.url");
+    await gameManager.addContract("Test", fakeContractForTests.address);
+    cloningFacility = await ethers.getContract(
+      "CloningFacility",
+      fakeContractForTests
+    );
+
+    await cloningFacility.changeUri(1, "https://changed.url");
+    expect(await cloningFacility.getCloneUri(1)).to.equal(
+      "https://changed.url"
+    );
+  });
+  it("should increase clone stat", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: await cloningFacility.cloneCostInBaseToken(),
+    });
+    expect(await cloningFacility.getCloneUri(1)).to.equal("https://test.url");
+    await gameManager.addContract("Test", fakeContractForTests.address);
+    cloningFacility = await ethers.getContract(
+      "CloningFacility",
+      fakeContractForTests
+    );
+
+    await cloningFacility.increaseStat(1, 0, 1);
+    expect(await cloningFacility.stats(1, 0)).to.equal(6);
+  });
+  it("should decrease clone stat", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: await cloningFacility.cloneCostInBaseToken(),
+    });
+    expect(await cloningFacility.getCloneUri(1)).to.equal("https://test.url");
+    await gameManager.addContract("Test", fakeContractForTests.address);
+    cloningFacility = await ethers.getContract(
+      "CloningFacility",
+      fakeContractForTests
+    );
+
+    await cloningFacility.decreaseStat(1, 0, 1);
+    expect(await cloningFacility.stats(1, 0)).to.equal(4);
   });
 });
