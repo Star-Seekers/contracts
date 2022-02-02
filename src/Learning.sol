@@ -6,8 +6,6 @@ import "./interfaces/ISkills.sol";
 import "./interfaces/IStats.sol";
 import "./interfaces/ICloningFacility.sol";
 
-import "hardhat/console.sol";
-
 /// @notice this contract serves as the central location for clone s
 contract Learning is UniversalData {
     bool internal initialized = false;
@@ -57,7 +55,7 @@ contract Learning is UniversalData {
         );
         require(
             learningState[_cloneId].end_time <= block.timestamp,
-            "Star Seekers: Skill has not finished training"
+            "Star Seekers: Not finished learning skill"
         );
 
         _resetAndUpdateLearningState(_cloneId);
@@ -76,10 +74,6 @@ contract Learning is UniversalData {
         notForSale(_cloneId)
         onlyCloneOwner(msg.sender, _cloneId)
     {
-        require(
-            !learningState[_cloneId].is_learning,
-            "Star Seekers: Already learning skill."
-        );
         /// @dev creats an instance of the Skills contract using the address stored on GameManager
         ISkills skillsInstance = ISkills(
             gameManager.contractAddresses("Skills")
@@ -308,6 +302,13 @@ contract Learning is UniversalData {
             );
         }
 
+        require(
+            !learningState[_cloneId].is_learning,
+            "Star Seekers: Already learning, please stop current skill."
+        );
+
+        require(_skill.id != 0, "Star Seekers: Invalid skill");
+
         return true;
     }
 
@@ -326,23 +327,20 @@ contract Learning is UniversalData {
         );
         /// @dev loads skill definitions
         ISkills.Skill memory skill = skillsInstance.getSkillById(learning);
+        uint256 learningPointsEarned = _calculateLearningPointsEarned(
+            skill,
+            _cloneId
+        );
 
-        if (block.timestamp > learningState[_cloneId].end_time) {
+        if (block.timestamp >= learningState[_cloneId].end_time) {
             learningLog[_cloneId][learning].skill_level += 1;
             learningLog[_cloneId][learning].learning_points = 0;
         } else {
             learningLog[_cloneId][learning]
-                .learning_points = _calculateLearningPointsEarned(
-                skill,
-                _cloneId
-            );
+                .learning_points = learningPointsEarned;
         }
 
-        learningState[_cloneId]
-            .total_learning_points += _calculateLearningPointsEarned(
-            skill,
-            _cloneId
-        );
+        learningState[_cloneId].total_learning_points += learningPointsEarned;
 
         /// @dev reset learning state
         learningState[_cloneId].start_time = 0;

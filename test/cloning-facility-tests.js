@@ -65,4 +65,47 @@ describe("Cloning Facility", async () => {
     assert.equal(ethers.utils.formatEther(credBalance), "10000.0");
     assert.equal(cloneBalance.toNumber(), 2);
   });
+
+  it("should create a new clone and return the difference if the user over pays", async () => {
+    const federationBalanceBefore = await ethers.provider.getBalance(
+      federation.address
+    );
+    const cloneCostInBaseToken = await cloningFacility.cloneCostInBaseToken();
+
+    const tx = await cloningFacility.create("https://test.url", {
+      value: cloneCostInBaseToken.add(ethers.utils.parseEther("1.0")),
+    });
+    const data = await tx.wait();
+
+    assert.ok(Array.isArray(data.events));
+    assert.equal(data.events.length, 5);
+
+    for (let i = 0; i < data.events.length; i++) {
+      if (typeof data.events[i].event !== "undefined") {
+        assert.equal(data.events[i].event, "CloneCreated");
+        assert.equal(data.events[i].args.cloneId.toNumber(), "1");
+        assert.equal(data.events[i].args.owner, admin.address);
+      }
+    }
+
+    const cloneBalance = await clone.balanceOf(admin.address);
+    const credBalance = await cred.balanceOf(admin.address);
+    const cloneData = await cloningFacility.getCloneData(1);
+    const cloneUri = await cloningFacility.getCloneUri(1);
+    const federationBalanceAfter = await ethers.provider.getBalance(
+      federation.address
+    );
+
+    assert.equal(
+      ethers.utils.formatEther(
+        federationBalanceBefore.add(cloneCostInBaseToken)
+      ),
+      ethers.utils.formatEther(federationBalanceAfter)
+    );
+    assert.equal(cloneUri, "https://test.url");
+    assert.equal(cloneData.for_sale, false);
+    assert.equal(cloneData.uri, "https://test.url");
+    assert.equal(ethers.utils.formatEther(credBalance), "10000.0");
+    assert.equal(cloneBalance.toNumber(), 1);
+  });
 });

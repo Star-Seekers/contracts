@@ -7,8 +7,6 @@ import "./interfaces/IStats.sol";
 import "./interfaces/ICRED.sol";
 import "./interfaces/IChainlinkAggregator.sol";
 
-import "hardhat/console.sol";
-
 /// @notice this contract serves as the central location for clone s
 contract CloningFacility is UniversalData {
     bool internal initialized;
@@ -238,6 +236,9 @@ contract CloningFacility is UniversalData {
         return true;
     }
 
+    /// @notice handles receving payments for clones in blockchain base token
+    /// @param _buyer address buyers address
+    /// @return bool success
     function _handleReceivePayment(address _buyer) private returns (bool) {
         uint256 cost = cloneCostInBaseToken();
         require(msg.value >= cost, "Star Seekers: Invalid payment amount");
@@ -250,8 +251,7 @@ contract CloningFacility is UniversalData {
 
         if (returnAmount > 0) {
             (sent, ) = _buyer.call{value: returnAmount}("");
-
-            require(sent, "Star Seekers: Failed to return difference to buyer");
+            console.log("return amount", returnAmount);
         }
 
         return true;

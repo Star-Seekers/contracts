@@ -3,12 +3,13 @@ const { deployments, ethers } = require("hardhat");
 
 let skills;
 let admin;
+let federation;
 let cloningFacility;
 let learning;
 
 beforeEach(async () => {
   await deployments.fixture();
-  [admin] = await ethers.getSigners();
+  [admin, federation] = await ethers.getSigners();
 
   learning = await ethers.getContract("Learning", admin);
   skills = await ethers.getContract("Skills", admin);
@@ -75,7 +76,7 @@ describe("Learning", async () => {
     assert.equal(learningLog.skill_level.toNumber(), 0);
     assert.equal(learningLog.learning_points.toNumber(), 18750);
   });
-  it("should continue learning a stopped skill where it left off", async () => {
+  it("should finish learning a stopped skill where it left off", async () => {
     await cloningFacility.create("https://test.url", {
       value: await cloningFacility.cloneCostInBaseToken(),
     });
@@ -109,17 +110,169 @@ describe("Learning", async () => {
     assert.equal(learningState.is_learning, false);
     assert.equal(learningState.learning.toNumber(), 0);
   });
-  it("should not start learning if clone is for sale", async () => {});
-  it("should not start learning if not called by owner", async () => {});
-  it("should not start learning if in maintenance", async () => {});
-  it("should not complete learning if not called by owner", async () => {});
-  it("should not complete learning if in maintenance", async () => {});
-  it("should not complete learning if skill training not complete", async () => {});
-  it("should not start learning if skill does not exist", async () => {});
+  it("should not start learning if clone is for sale", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
 
-  it("should not stop learning if clone is for sale", async () => {});
-  it("should not stop learning if not called by owner", async () => {});
-  it("should not stop learning if in maintenance", async () => {});
+    const cloneMarket = await ethers.getContract("CloneMarket", admin);
+    const clone = await ethers.getContract("Clone", admin);
+    await clone.setApprovalForAll(cloneMarket.address, true);
+    await cloneMarket.list(1, ethers.utils.parseEther("1000"));
+
+    await expect(learning.startLearning(1, 1)).to.be.revertedWith(
+      "Star Seekers: Can't complete action while clone is for sale"
+    );
+  });
+  it("should not start learning if not called by owner", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    learning = await ethers.getContract("Learning", federation);
+
+    await expect(learning.startLearning(1, 1)).to.be.revertedWith(
+      "Star Seekers: Clone owner only"
+    );
+  });
+  it("should not start learning if in maintenance", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    const gameManager = await ethers.getContract("GameManager", admin);
+    gameManager.setMaintenance(true);
+
+    await expect(learning.startLearning(1, 1)).to.be.revertedWith(
+      "Star Seekers: Down for Maintenance"
+    );
+  });
+  it("should not start learning if skill does not exist", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    await expect(learning.startLearning(1, 40)).to.be.revertedWith(
+      "Star Seekers: Invalid skill"
+    );
+  });
+  it("should not start training if already training a skill", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    await learning.startLearning(1, 1);
+
+    await expect(learning.startLearning(1, 1)).to.be.revertedWith(
+      "Star Seekers: Already learning, please stop current skill"
+    );
+  });
+  it("should not complete learning if not called by owner", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    await learning.startLearning(1, 1);
+
+    const learningState = await learning.getLearningState(1);
+    const trainingTime = learningState.end_time.sub(learningState.start_time);
+
+    await ethers.provider.send("evm_increaseTime", [
+      trainingTime.toNumber() * 2,
+    ]);
+    await ethers.provider.send("evm_mine");
+
+    learning = await ethers.getContract("Learning", federation);
+
+    await expect(learning.completeLearning(1)).to.be.revertedWith(
+      "Star Seekers: Clone owner only"
+    );
+  });
+  it("should not complete learning if in maintenance", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    await learning.startLearning(1, 1);
+
+    const learningState = await learning.getLearningState(1);
+    const trainingTime = learningState.end_time.sub(learningState.start_time);
+
+    await ethers.provider.send("evm_increaseTime", [
+      trainingTime.toNumber() * 2,
+    ]);
+    await ethers.provider.send("evm_mine");
+
+    const gameManager = await ethers.getContract("GameManager", admin);
+    gameManager.setMaintenance(true);
+
+    await expect(learning.completeLearning(1)).to.be.revertedWith(
+      "Star Seekers: Down for Maintenance"
+    );
+  });
+  it("should not complete learning if skill training not complete", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    await learning.startLearning(1, 1);
+
+    const learningState = await learning.getLearningState(1);
+    const trainingTime = learningState.end_time.sub(learningState.start_time);
+
+    await ethers.provider.send("evm_increaseTime", [
+      trainingTime.toNumber() / 2,
+    ]);
+    await ethers.provider.send("evm_mine");
+
+    await expect(learning.completeLearning(1)).to.be.revertedWith(
+      "Star Seekers: Not finished learning skill"
+    );
+  });
+  it("should not stop learning if not called by owner", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    await learning.startLearning(1, 1);
+    learning = await ethers.getContract("Learning", federation);
+
+    await expect(learning.stopLearning(1)).to.be.revertedWith(
+      "Star Seekers: Clone owner only"
+    );
+  });
+  it("should not stop learning if in maintenance", async () => {
+    await cloningFacility.create("https://test.url", {
+      value: ethers.utils.parseEther(
+        ethers.utils.formatEther(await cloningFacility.cloneCostInBaseToken())
+      ),
+    });
+
+    const gameManager = await ethers.getContract("GameManager", admin);
+    gameManager.setMaintenance(true);
+
+    await expect(learning.stopLearning(1)).to.be.revertedWith(
+      "Star Seekers: Down for Maintenance"
+    );
+  });
 });
 
 const trainSkillToLevel = async (cloneId, skillId, level) => {
