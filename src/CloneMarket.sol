@@ -7,8 +7,9 @@ import "./interfaces/ICloningFacility.sol";
 import "./interfaces/ILearning.sol";
 import "./interfaces/ISkills.sol";
 import "./interfaces/ICRED.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract CloneMarket is UniversalData {
+contract CloneMarket is UniversalData, ReentrancyGuard {
     bool internal initialized;
     /// @notice emitted when a clone is listed on the market
     event CloneListed(uint256 cloneId, uint256 price);
@@ -73,7 +74,7 @@ contract CloneMarket is UniversalData {
 
     /// @notice Buys a clone listed on the market
     /// @param _cloneId the id of the clone that is being purchased
-    function buy(uint256 _cloneId) public {
+    function buy(uint256 _cloneId) public nonReentrant {
         ICloningFacility cloningFacility = ICloningFacility(
             gameManager.contractAddresses("CloningFacility")
         );

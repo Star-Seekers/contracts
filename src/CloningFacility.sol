@@ -6,9 +6,10 @@ import "./interfaces/IClone.sol";
 import "./interfaces/IStats.sol";
 import "./interfaces/ICRED.sol";
 import "./interfaces/IChainlinkAggregator.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @notice this contract serves as the central location for clone s
-contract CloningFacility is UniversalData {
+contract CloningFacility is UniversalData, ReentrancyGuard {
     bool internal initialized;
 
     struct CloneData {
@@ -54,13 +55,16 @@ contract CloningFacility is UniversalData {
     /// @notice Creates a new clone
     /// @dev gets the price of the chains base token from chainlink
     /// @param _uri json IPFS endpoint
-    function create(string memory _uri) public payable notInMaintenance {
+    function create(string memory _uri)
+        public
+        payable
+        notInMaintenance
+        nonReentrant
+    {
         require(
             gameManager.chainlinkFeed() != address(0),
             "Star Seekers: No chainlink feed set"
         );
-
-        _handleReceivePayment(msg.sender);
 
         ICred cred = ICred(gameManager.contractAddresses("CRED"));
 
@@ -91,6 +95,8 @@ contract CloningFacility is UniversalData {
             cred.mint(msg.sender, gameManager.startingCred());
             gameManager.updateHasReceivedStartingCred(msg.sender);
         }
+
+        _handleReceivePayment(msg.sender);
 
         emit CloneCreated(newCloneId, msg.sender);
     }
@@ -239,14 +245,17 @@ contract CloningFacility is UniversalData {
     /// @notice handles receving payments for clones in blockchain base token
     /// @param _buyer address buyers address
     /// @return bool success
-    function _handleReceivePayment(address _buyer) private returns (bool) {
+    function _handleReceivePayment(address _buyer)
+        private
+        nonReentrant
+        returns (bool)
+    {
         uint256 cost = cloneCostInBaseToken();
         require(msg.value >= cost, "Star Seekers: Invalid payment amount");
 
         uint256 returnAmount = msg.value - cost;
 
         (bool sent, ) = payable(gameManager.federation()).call{value: cost}("");
-
         require(sent, "Star Seekers: Failed to send to federation");
 
         if (returnAmount > 0) {
